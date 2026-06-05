@@ -13,6 +13,7 @@ export interface Car {
   fuelType: 'Bensin' | 'Diesel' | 'Hybrid';
   isSold: boolean;
   engineCc: string;
+  detailImages?: string[];
 }
 
 export interface HeroData {
@@ -78,6 +79,18 @@ export interface HallOfFameItem {
   rating: number;
 }
 
+export interface AdvisorItem {
+  id: string;
+  name: string;
+  phone: string;
+  area: string;
+  badge: string;
+  specialty: string;
+  rating: string;
+  sold: string;
+  avatar: string;
+}
+
 export interface VideoItem {
   id: string;
   category: 'Unit Review' | 'Test Drive' | 'Tips Beli' | 'Testimoni';
@@ -107,4 +120,5 @@ export interface CMSData {
   videos: VideoItem[];
   showroom: ShowroomConfig;
   hallOfFame?: HallOfFameItem[];
+  advisors?: AdvisorItem[];
 }

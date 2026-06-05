@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { 
   CheckCircle2, ArrowRight, Phone, MessageCircle, MapPin, 
   Search, Shield, Star, Award, Users, Calendar, 
-  Play, ExternalLink, Mail, UserCheck, ChevronRight, X
+  Play, ExternalLink, Mail, UserCheck, ChevronRight, X,
+  Clock, Copy, Map, Compass
 } from 'lucide-react';
 import { CMSData, Car } from '../types';
 import { CarIllustration } from './CarIllustration';
 import { HallOfFameRoom } from './HallOfFameRoom';
 import { ParallaxHero } from './ParallaxHero';
 import { InfiniteCarScroll } from './InfiniteCarScroll';
+import { optimizeImageUrl } from '../utils/imageOptimizer';
+import { CarDetailModal } from './CarDetailModal';
 
 const GALLERY_IMAGE_MAP: Record<string, string> = {
   showroom_wiyung: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80", // Interior Luxury Showroom
@@ -32,6 +35,7 @@ interface DashboardProps {
   setActiveTab: (tab: string) => void;
   cmsOpen?: boolean;
   setCmsOpen?: (open: boolean) => void;
+  theme?: 'dark' | 'light';
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ 
@@ -39,7 +43,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   activeTab, 
   setActiveTab,
   cmsOpen,
-  setCmsOpen
+  setCmsOpen,
+  theme = 'dark'
 }) => {
   // Filters for Catalog
   const [searchQuery, setSearchQuery] = useState('');
@@ -54,11 +59,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
   // Active blog detail model
   const [activeArticleId, setActiveArticleId] = useState<string | null>(null);
 
+  // Selected car for spec detail card/modal
+  const [selectedCar, setSelectedCar] = useState<Car | null>(null);
+
   // Contact form submission local state
   const [contactName, setContactName] = useState('');
   const [contactPhone, setContactPhone] = useState('');
   const [contactMessage, setContactMessage] = useState('');
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [copiedBranch, setCopiedBranch] = useState<'wiyung' | 'dtc' | null>(null);
+  const [activeMapTab, setActiveMapTab] = useState<'wiyung' | 'dtc'>('wiyung');
 
   // Form submission handler
   const handleContactSubmit = (e: React.FormEvent) => {
@@ -384,7 +394,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {filteredCars.map((car) => (
                 <div 
                   key={car.id}
-                  className="bg-navy-card border border-navy-light hover:border-accent-red rounded overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group"
+                  onClick={() => setSelectedCar(car)}
+                  className="bg-navy-card border border-navy-light hover:border-accent-red rounded overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group cursor-pointer"
                 >
                   <div className="relative">
                     {car.isSold ? (
@@ -400,6 +411,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                     {/* SVG Illustration of car structure */}
                     <CarIllustration type={car.image} brand={car.brand} isSold={car.isSold} />
+
+                    {/* Glassy detail overlay prompt */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 z-10 backdrop-blur-[1px]">
+                      <span className="bg-black/80 text-white font-mono text-[9px] uppercase tracking-[0.2em] px-3 py-1.5 border border-white/10 rounded shadow-lg">
+                        [ LIHAT SPESIFIKASI ]
+                      </span>
+                    </div>
                   </div>
 
                   <div className="p-5 space-y-3">
@@ -432,7 +450,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         href={`https://wa.me/6281330253797?text=Halo%20Jaya%20Berkat%20Mobil,%20apakah%20mobil%20*${encodeURIComponent(car.name)}* ${car.year} masih%20ada?`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 bg-navy-deep hover:bg-accent-red text-slate-300 hover:text-white px-3.5 py-1.5 rounded border border-navy-light hover:border-accent-red transition-all duration-200 text-xs font-bold uppercase tracking-wider"
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center gap-1.5 bg-navy-deep hover:bg-accent-red text-slate-300 hover:text-white px-3.5 py-1.5 rounded border border-navy-light hover:border-accent-red transition-all duration-200 text-xs font-bold uppercase tracking-wider font-sans"
                       >
                         <MessageCircle className="w-3.5 h-3.5 text-accent-red group-hover:text-white" />
                         <span>Tanya WA</span>
@@ -537,39 +556,84 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {/* Introduce the 5 Sales Team members with customization */}
           <div className="space-y-8">
             <div className="text-center">
-              <span className="text-[10px] font-mono text-accent-red uppercase tracking-[0.2em] font-bold">PERSONAL SERVICE</span>
-              <h2 className="font-sans font-black text-2xl text-slate-100 uppercase tracking-tight">Hubungi 5 Sales Advisor Kami</h2>
+              <span className="text-[10px] font-mono text-accent-red uppercase tracking-[0.2em] font-bold">PERSONAL SERVICE TEAM</span>
+              <h2 className="font-sans font-black text-2xl sm:text-3xl text-slate-100 uppercase tracking-tight">Hubungi 5 Sales Advisor Kami</h2>
               <p className="text-slate-400 text-xs max-w-lg mx-auto">Kami siap melayani kebutuhan konsultasi mobil bekas Anda secara personal di dua lokasi showroom kami.</p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              {[
-                { name: 'Andik JBM', phone: '6285785649369', area: 'Showroom DTC', badge: 'Sales Advisor' },
-                { name: 'Jevry JBM', phone: '6281330253797', area: 'Showroom Wiyung', badge: 'Manager' },
-                { name: 'Yoan JBM', phone: '6281808383522', area: 'Showroom Wiyung', badge: 'Senior Advisor' },
-                { name: 'Ricky JBM', phone: '6281380553331', area: 'Showroom DTC', badge: 'Sales Specialist' },
-                { name: 'Fatchul JBM', phone: '6281270605758', area: 'Showroom Wiyung', badge: 'Sales Advisor' }
-              ].map((sale, idx) => (
-                <div key={idx} className="bg-navy-card border border-navy-light rounded p-4 text-center space-y-3 relative overflow-hidden group shadow-lg">
-                  <div className="w-12 h-12 rounded-full bg-navy-deep border border-navy-light text-accent-red font-black text-base flex items-center justify-center mx-auto group-hover:border-accent-red transition-colors duration-200">
-                    {sale.name.charAt(0)}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+              {(cmsData.advisors || []).map((sale, idx) => (
+                <div 
+                  key={sale.id || idx} 
+                  className="bg-gradient-to-b from-[#0c121e] to-[#040811] border border-white/5 hover:border-accent-red/50 rounded-xl p-5 text-center space-y-4 relative overflow-hidden group shadow-2xl transition-all duration-300 hover:scale-[1.02] flex flex-col justify-between"
+                  id={`advisor_${sale.name.toLowerCase().replace(/\s+/g, '_')}`}
+                >
+                  {/* Neon top/ambient outline */}
+                  <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4A017]/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  
+                  {/* Status Indicator Live */}
+                  <div className="absolute top-3 right-3 flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                    </span>
+                    <span className="text-[7.5px] font-mono text-emerald-400 uppercase font-bold tracking-wider">ONLINE</span>
                   </div>
-                  <div>
-                    <h4 className="font-sans font-black text-xs text-slate-100 leading-none block uppercase tracking-wide">{sale.name}</h4>
-                    <span className="text-[9px] text-accent-red uppercase tracking-wider block mt-1 font-mono font-bold">{sale.badge}</span>
+
+                  {/* Gorgeous high-contrast profile picture */}
+                  <div className="space-y-3">
+                    <div className="relative w-20 h-20 rounded-full mx-auto overflow-hidden p-1 border-2 border-white/5 group-hover:border-accent-red transition-colors duration-300">
+                      <img 
+                        src={optimizeImageUrl(sale.avatar, 150, 80)} 
+                        alt={sale.name}
+                        className="w-full h-full object-cover rounded-full filter grayscale group-hover:grayscale-0 transition-all duration-300 scale-105 group-hover:scale-110"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+
+                    {/* Metadata detail */}
+                    <div>
+                      <h4 className="font-sans font-black text-sm text-slate-100 uppercase tracking-wide leading-tight group-hover:text-accent-red transition-colors">
+                        {sale.name}
+                      </h4>
+                      <span className="text-[9px] text-[#D4A017] uppercase tracking-widest font-mono font-bold">
+                        {sale.badge}
+                      </span>
+                    </div>
+
+                    {/* Showroom location emblem tag */}
+                    <div className="inline-block text-[8.5px] font-mono font-bold text-gray-400 bg-black/40 border border-white/5 py-1 px-2.5 rounded uppercase tracking-wider">
+                      {sale.area}
+                    </div>
+
+                    {/* Specialty niche */}
+                    <div className="pt-1.5 border-t border-white/5">
+                      <p className="text-[8px] font-mono text-slate-500 uppercase tracking-widest">Kombinasi Spesialisasi:</p>
+                      <p className="text-[10px] font-sans font-bold text-slate-200 uppercase mt-0.5">{sale.specialty}</p>
+                    </div>
+
+                    {/* Rating achievements summary */}
+                    <div className="flex items-center justify-center gap-4 text-[9px] font-mono text-gray-500 pt-1">
+                      <span className="flex items-center gap-0.5 text-amber-500 font-bold">
+                        <Star className="w-3 h-3 fill-amber-500" /> {sale.rating}
+                      </span>
+                      <span className="text-white/20">|</span>
+                      <span className="text-slate-300 font-bold uppercase">{sale.sold}</span>
+                    </div>
                   </div>
-                  <div className="text-[10px] text-slate-400 bg-navy-deep border border-navy-light/10 p-1.5 rounded">
-                    {sale.area}
+
+                  {/* Direct action CTA button link */}
+                  <div className="pt-2">
+                    <a
+                      href={`https://wa.me/${sale.phone.replace(/[^0-9]/g, '')}?text=Halo%20${sale.name},%20saya%20tertarik%20konsultasi%20mengenai%20unit%20siap%20pakai%20Jaya%20Berkat%20Mobil.`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-center gap-2 bg-navy-deep hover:bg-emerald-600/90 border border-white/10 hover:border-emerald-500 text-slate-300 hover:text-white py-2 rounded-lg text-[9px] uppercase font-black tracking-widest transition-all duration-300"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5 text-accent-red group-hover:text-white fill-current shrink-0" />
+                      <span>KONSULTASI SEKARANG</span>
+                    </a>
                   </div>
-                  <a
-                    href={`https://wa.me/${sale.phone.replace(/[^0-9]/g, '')}?text=Halo%20${sale.name},%20saya%20ingin%20konsultasi%20mengenai%20unit%20di%20JBM.`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-1.5 bg-navy-deep hover:bg-accent-red border border-navy-light hover:border-accent-red text-slate-300 hover:text-white py-1.5 rounded text-[10px] uppercase font-bold tracking-wider transition-all"
-                  >
-                    <MessageCircle className="w-3.5 h-3.5 text-accent-red group-hover:text-white" />
-                    <span>WhatsApp</span>
-                  </a>
                 </div>
               ))}
             </div>
@@ -630,12 +694,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   onClick={() => setActiveLightboxImage(item.title)}
                   className="relative group overflow-hidden border border-navy-light rounded-lg cursor-pointer bg-navy-card shadow-lg aspect-[4/3]"
                 >
-                  {/* Real responsive image */}
+                  {/* Real responsive image with custom compression parameters and lazy loading */}
                   <img 
-                    src={getGalleryImageUrl(item.imageUrl)} 
+                    src={optimizeImageUrl(getGalleryImageUrl(item.imageUrl), 550, 70)} 
                     alt={item.title} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     referrerPolicy="no-referrer"
+                    loading="lazy"
+                    decoding="async"
                   />
                   
                   {/* Elegant overlay gradient on card bottom */}
@@ -684,10 +750,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                   <div className="relative w-full h-80 bg-navy-deep border border-navy-light/45 rounded overflow-hidden">
                     <img 
-                      src={imageUrl} 
+                      src={optimizeImageUrl(imageUrl, 1200, 85)} 
                       alt={activeLightboxImage} 
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
+                      decoding="async"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent flex flex-col justify-end p-5">
                       <span className="text-[10px] uppercase tracking-widest text-accent-red font-bold">
@@ -845,165 +912,379 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* ──────────────────────────────────────────────────────────────────────── */}
       {/* SECTION: KONTAK */}
       {/* ──────────────────────────────────────────────────────────────────────── */}
-      {activeTab === 'kontak' && (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 space-y-12 animate-fadeIn min-h-screen font-sans">
-          
-          <div className="text-left space-y-2">
-            <span className="text-[10px] font-mono text-accent-red uppercase tracking-[0.2em] font-bold block">SHOWROOM LOCATIONS</span>
-            <h1 className="font-sans font-black text-3xl text-slate-100 uppercase tracking-tight">Hubungi Jaya Berkat Mobil</h1>
-            <p className="text-slate-400 text-xs sm:text-sm max-w-xl">
-              Showroom kami tersebar di cabang Surabaya Barat (Wiyung) dan pusat kota (Darmo Trade Center Wonokromo). Silakan kunjungi unit fisik atau hubungi sales online.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      {activeTab === 'kontak' && (() => {
+        // Calculate dynamic live operation status for Surabaya UTC+7 timezone
+        const checkShowroomStatus = () => {
+          try {
+            const now = new Date();
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const surabayaDate = new Date(utc + (3600000 * 7));
+            const day = surabayaDate.getDay(); 
+            const hour = surabayaDate.getHours();
             
-            {/* Showroom Cards - 5 columns */}
-            <div className="lg:col-span-5 space-y-6">
+            if (day === 0) { // Minggu
+              return { open: hour >= 8 && hour < 16, hours: "08:00 - 16:00 WIB" };
+            } else { // Senin - Sabtu
+              return { open: hour >= 8 && hour < 17, hours: "08:00 - 17:00 WIB" };
+            }
+          } catch (e) {
+            return { open: true, hours: "08:00 - 17:00 WIB" };
+          }
+        };
+
+        const status = checkShowroomStatus();
+        const mapIframeUrl = activeMapTab === 'wiyung' 
+          ? "https://maps.google.com/maps?q=Jaya%20Berkat%20Mobil%20Menganti%20Babatan%20Surabaya&t=&z=15&ie=UTF8&iwloc=&output=embed"
+          : "https://maps.google.com/maps?q=Bursa%20Mobil%20DTC%20Wonokromo%20Surabaya&t=&z=15&ie=UTF8&iwloc=&output=embed";
+
+        const handleCopyAddress = (branch: 'wiyung' | 'dtc', address: string) => {
+          navigator.clipboard.writeText(address);
+          setCopiedBranch(branch);
+          setTimeout(() => setCopiedBranch(null), 2000);
+        };
+
+        return (
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 space-y-12 animate-fadeIn min-h-screen font-sans">
+            
+            {/* Header with Live Status Banner */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/5 pb-8">
+              <div className="text-left space-y-2">
+                <span className="text-[10px] font-mono text-accent-red uppercase tracking-[0.2em] font-black block">
+                  📍 VISITING GUIDE & SERVICE ASSISTANCE
+                </span>
+                <h1 className="font-sans font-black text-3xl sm:text-4xl text-slate-100 uppercase tracking-tight">
+                  Hubungi Jaya Berkat Mobil
+                </h1>
+                <p className="text-slate-400 text-xs sm:text-sm max-w-2xl">
+                  Dua showroom fisik strategis di Surabaya Barat & Pusat Kota siap menyambut Anda. Konsultasikan unit impian, jadwalkan test drive, atau lakukan tukar-tambah instan hari ini.
+                </p>
+              </div>
+
+              {/* Glowing Dynamic Live Status Clock */}
+              <div className="bg-[#0b101c] border border-white/5 rounded-2xl p-4 flex items-center gap-4 self-start md:self-auto shadow-2xl min-w-[260px]">
+                <div className={`w-3.5 h-3.5 rounded-full flex-shrink-0 relative ${status.open ? 'bg-emerald-500' : 'bg-[#D4A017]'}`}>
+                  <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping ${status.open ? 'bg-emerald-400' : 'bg-yellow-400'}`}></span>
+                </div>
+                <div className="text-left font-mono">
+                  <div className="text-[9px] text-gray-400 uppercase tracking-widest font-black flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-red-500" /> STATUS SHOWROOM SEKARANG:
+                  </div>
+                  <div className="text-xs font-bold text-white uppercase mt-0.5">
+                    {status.open ? (
+                      <span className="text-emerald-400 font-extrabold">🟢 Buka Sekarang (S/D 17:00)</span>
+                    ) : (
+                      <span className="text-[#D4A017] font-extrabold">🟡 Tutup (Layanan Online Aktif)</span>
+                    )}
+                  </div>
+                  <div className="text-[10px] text-slate-500 mt-1">
+                    WIB Surabaya (UTC+7)
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Interactive Contact Grid (12 Columns) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               
-              {/* Cabang Wiyung */}
-              <div className="bg-navy-card border border-navy-light rounded-lg p-5 space-y-3 shadow-lg">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-sans font-black text-sm text-accent-red uppercase tracking-wide">
-                    📍 Cabang Wiyung (Showroom Utama)
-                  </h3>
-                  <span className="bg-accent-red/10 text-accent-red text-[9px] font-bold px-2 py-0.5 rounded border border-accent-red/20 animate-pulse">
-                    Ada Display Unit
-                  </span>
-                </div>
-                <p className="text-slate-300 text-xs leading-relaxed font-sans">
-                  {cmsData.showroom.wiyungAddress}
-                </p>
-                <div className="flex gap-2 text-xs pt-1">
-                  <a
-                    href="https://maps.google.com/?q=Wiyung+Surabaya"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-accent-red hover:underline uppercase tracking-widest text-[9.5px] font-bold"
-                  >
-                    <span>Google Maps</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                  <span className="text-navy-light">|</span>
-                  <span className="text-slate-400 font-mono">Telp: {cmsData.showroom.wiyungPhone}</span>
-                </div>
-              </div>
+              {/* Left Side: Dynamic Showrooms & Embedded Map (col-span-7) */}
+              <div className="lg:col-span-7 space-y-6">
+                
+                {/* Branch Switcher & Details */}
+                <div className="bg-navy-card border border-navy-light rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+                  
+                  {/* Selector Tabs */}
+                  <div className={`grid grid-cols-2 border-b ${theme === 'light' ? 'bg-slate-100 border-slate-200' : 'bg-[#090f1a] border-white/5'}`}>
+                    <button
+                      onClick={() => setActiveMapTab('wiyung')}
+                      className={`py-4 text-[10px] font-sans font-black uppercase tracking-wider text-center transition-all duration-250 cursor-pointer border-b-2
+                        ${activeMapTab === 'wiyung'
+                          ? theme === 'light'
+                            ? 'bg-white text-slate-900 border-accent-red'
+                            : 'bg-navy-card text-white border-accent-red'
+                          : theme === 'light'
+                            ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/50 border-transparent'
+                            : 'text-gray-400 hover:text-white hover:bg-white/5 border-transparent'
+                        }`}
+                    >
+                      🏡 Cabang Wiyung (Utama)
+                    </button>
+                    <button
+                      onClick={() => setActiveMapTab('dtc')}
+                      className={`py-4 text-[10px] font-sans font-black uppercase tracking-wider text-center transition-all duration-250 cursor-pointer border-b-2
+                        ${activeMapTab === 'dtc'
+                          ? theme === 'light'
+                            ? 'bg-white text-slate-900 border-accent-red'
+                            : 'bg-navy-card text-white border-accent-red'
+                          : theme === 'light'
+                            ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/50 border-transparent'
+                            : 'text-gray-400 hover:text-white hover:bg-white/5 border-transparent'
+                        }`}
+                    >
+                      🏢 Cabang DTC Wonokromo
+                    </button>
+                  </div>
 
-              {/* Cabang DTC */}
-              <div className="bg-navy-card border border-navy-light rounded-lg p-5 space-y-3 shadow-lg">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-sans font-black text-sm text-accent-red uppercase tracking-wide">
-                    📍 Cabang DTC Wonokromo (Showcase Pusat)
-                  </h3>
-                  <span className="bg-accent-red/10 text-accent-red text-[9px] font-bold px-2 py-0.5 rounded border border-accent-red/20">
-                    Mall Showroom
-                  </span>
-                </div>
-                <p className="text-slate-300 text-xs leading-relaxed font-sans">
-                  {cmsData.showroom.dtcAddress}
-                </p>
-                <div className="flex gap-2 text-xs pt-1">
-                  <a
-                    href="https://maps.google.com/?q=DTC+Wonokromo+Surabaya"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-accent-red hover:underline uppercase tracking-widest text-[9.5px] font-bold"
-                  >
-                    <span>Google Maps</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                  <span className="text-navy-light">|</span>
-                  <span className="text-slate-400 font-mono">Telp: {cmsData.showroom.dtcPhone}</span>
-                </div>
-              </div>
+                  {/* Dynamic Info Panel */}
+                  <div className="p-6 space-y-4 text-left">
+                    {activeMapTab === 'wiyung' ? (
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-start gap-4">
+                          <div>
+                            <h3 className="font-sans font-black text-sm text-slate-100 uppercase tracking-wide">
+                              Showroom Utama JBM Wiyung
+                            </h3>
+                            <span className="text-[10px] text-[#D4A017] font-mono tracking-widest font-black uppercase mt-1 inline-block">
+                              Pusat Display Unit Surabaya Barat
+                            </span>
+                          </div>
+                          <span className="bg-accent-red/10 text-accent-red text-[9px] font-bold px-2 py-0.5 rounded border border-accent-red/20 uppercase font-mono shrink-0">
+                            Cabang Utama
+                          </span>
+                        </div>
+                        <p className="text-slate-300 text-xs leading-relaxed font-sans font-medium">
+                          {cmsData.showroom.wiyungAddress || "Jl. Raya Menganti Babatan No. 700, Wiyung, Surabaya"}
+                        </p>
+                        
+                        {/* Interactive Action Badges */}
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          <button
+                            onClick={() => handleCopyAddress('wiyung', cmsData.showroom.wiyungAddress)}
+                            className={`${theme === 'light' ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border-slate-200' : 'bg-navy-deep hover:bg-navy-light text-slate-300 hover:text-white border-white/5'} text-[10px] font-mono uppercase px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer font-bold`}
+                          >
+                            <Copy className="w-3.5 h-3.5 text-accent-red" />
+                            <span>{copiedBranch === 'wiyung' ? 'Disalin! ✓' : 'Salin Alamat Lengkap'}</span>
+                          </button>
+                          
+                          <a
+                            href={cmsData.showroom.wiyungMapLink || "https://maps.google.com/?q=Jaya+Berkat+Mobil+Menganti+Babatan+Surabaya"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-accent-red/10 border border-accent-red/30 hover:bg-accent-red/20 text-accent-red text-[10px] font-mono uppercase px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 font-bold"
+                          >
+                            <Compass className="w-3.5 h-3.5" />
+                            <span>Buka Navigasi Map</span>
+                          </a>
 
-              {/* Operating status */}
-              <div className="bg-navy-deep p-4 border border-navy-light rounded font-mono text-[11px] text-slate-400 space-y-1">
-                <div className="flex justify-between items-center">
-                  <span>JAM OPERASIONAL SHORROOM:</span>
-                  <span className="text-slate-100 font-bold">{cmsData.showroom.operatingHours}</span>
+                          <span className="text-[10px] text-gray-500 font-mono py-1.5 px-2">
+                            Telpon: <span className={`${theme === 'light' ? 'text-slate-800' : 'text-white'} font-bold`}>{cmsData.showroom.wiyungPhone}</span>
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-start gap-4">
+                          <div>
+                            <h3 className="font-sans font-black text-sm text-slate-100 uppercase tracking-wide">
+                              Showroom Showcase DTC Wonokromo
+                            </h3>
+                            <span className="text-[10px] text-[#D4A017] font-mono tracking-widest font-black uppercase mt-1 inline-block">
+                              Bursa Mobil Bekas Indoor Terlengkap Surabaya
+                            </span>
+                          </div>
+                          <span className="bg-[#D4A017]/10 text-[#D4A017] text-[9px] font-bold px-2 py-0.5 rounded border border-[#D4A017]/20 uppercase font-mono shrink-0">
+                            Mall Outlet
+                          </span>
+                        </div>
+                        <p className="text-slate-300 text-xs leading-relaxed font-sans font-medium">
+                          {cmsData.showroom.dtcAddress || "Bursa Mobil Bekas DTC Wonokromo, Lt. 5 Blok B 18B-19, Surabaya"}
+                        </p>
+
+                        {/* Interactive Action Badges */}
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          <button
+                            onClick={() => handleCopyAddress('dtc', cmsData.showroom.dtcAddress)}
+                            className={`${theme === 'light' ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border-slate-200' : 'bg-navy-deep hover:bg-navy-light text-slate-300 hover:text-white border-white/5'} text-[10px] font-mono uppercase px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer font-bold`}
+                          >
+                            <Copy className="w-3.5 h-3.5 text-accent-red" />
+                            <span>{copiedBranch === 'dtc' ? 'Disalin! ✓' : 'Salin Alamat Lengkap'}</span>
+                          </button>
+                          
+                          <a
+                            href={cmsData.showroom.dtcMapLink || "https://maps.google.com/?q=DTC+Wonokromo+Surabaya"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-accent-red/10 border border-accent-red/30 hover:bg-accent-red/20 text-accent-red text-[10px] font-mono uppercase px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 font-bold"
+                          >
+                            <Compass className="w-3.5 h-3.5" />
+                            <span>Buka Navigasi Map</span>
+                          </a>
+
+                          <span className="text-[10px] text-gray-500 font-mono py-1.5 px-2">
+                            Telpon: <span className={`${theme === 'light' ? 'text-slate-800' : 'text-white'} font-bold`}>{cmsData.showroom.dtcPhone}</span>
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Embedded Iframe Map Container with modern aspect ratio */}
+                  <div className={`w-full h-80 ${theme === 'light' ? 'bg-slate-50 border-slate-250' : 'bg-[#070b13] border-white/5'} relative border-t`}>
+                    <iframe
+                      src={mapIframeUrl}
+                      className="w-full h-full border-none grayscale"
+                      allowFullScreen={true}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      title="Google Maps Location"
+                    ></iframe>
+                  </div>
+
                 </div>
-                <div className="text-[10px] text-accent-red font-bold">
-                  ★ Khusus Hari Minggu silakan buat janji melalui sales advisor kami terlebih dahulu.
+
+                {/* Operating hours footer details */}
+                <div className={`${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-[#0b101c] border-white/5 text-slate-400'} p-4.5 border rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left font-mono text-xs shadow-md`}>
+                  <div className="space-y-1">
+                    <div className={`flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-slate-200'} font-bold`}>
+                      <Clock className="w-4 h-4 text-[#D4A017]" />
+                      <span>JAM KERJA SHORROOM JBM:</span>
+                    </div>
+                    <p className="text-[11px] font-medium leading-relaxed pl-6">
+                      {cmsData.showroom.operatingHours || "Senin – Sabtu (08:00 – 17:00 WIB), Minggu (08:00 – 16:00 WIB)"}
+                    </p>
+                  </div>
+                  <div className={`sm:max-w-xs text-[10px] text-accent-red border-l sm:border-l ${theme === 'light' ? 'border-slate-200' : 'border-white/5'} pl-2 sm:pl-4`}>
+                    📢 Khusus kunjungan di Hari Minggu sangat disarankan membuat janji terlebih dahulu agar didampingi sales advisor pilihan Anda.
+                  </div>
                 </div>
+
+              </div>
+              
+              {/* Right Side: Consultant Inquiry Form (col-span-5) */}
+              <div className="lg:col-span-5 bg-navy-card border border-navy-light rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl relative text-left">
+                <div className="absolute top-0 right-8 transform -translate-y-1/2 bg-accent-red text-white text-[8px] font-mono font-black uppercase px-2.5 py-1 rounded tracking-[0.2em] shadow-lg">
+                  FAST RESPONSE
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="font-sans font-black text-xl text-slate-100 uppercase tracking-wider leading-tight">
+                    Cari Unit Spesifik?
+                  </h3>
+                  <p className="text-slate-400 text-xs leading-relaxed">
+                    Ajukan pemesanan tipe mobil tertentu yang belum ada di katalog kami. Tim pencari kami akan melacak surat & kondisi unit langsung di lapangan secara cepat.
+                  </p>
+                </div>
+
+                {formSubmitted ? (
+                  <div className="bg-emerald-600/10 border border-emerald-500/20 p-8 text-center rounded-xl space-y-3 text-emerald-400">
+                    <span className="text-3xl inline-block animate-bounce">💬</span>
+                    <h4 className="font-sans font-black text-sm uppercase">Permohonan Terkirim!</h4>
+                    <p className="text-xs text-slate-300 leading-normal">
+                      Menghubungkan langsung dengan konsultan senior kami via WhatsApp untuk pemrosesan detail...
+                    </p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleContactSubmit} className="space-y-4">
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-[9px] uppercase tracking-wider text-slate-400 font-bold mb-1 font-mono">
+                          Nama Lengkap Anda
+                        </label>
+                        <input
+                          type="text"
+                          value={contactName}
+                          onChange={(e) => setContactName(e.target.value)}
+                          placeholder="Misal: Bapak Gunawan"
+                          className="w-full bg-navy-deep border border-navy-light rounded-xl px-4 py-3 text-xs text-slate-100 placeholder-slate-600 focus:border-[#D4A017] focus:ring-1 focus:ring-[#D4A017] outline-none transition-all"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] uppercase tracking-wider text-slate-400 font-bold mb-1 font-mono">
+                          Nomor WhatsApp Aktif
+                        </label>
+                        <input
+                          type="tel"
+                          value={contactPhone}
+                          onChange={(e) => setContactPhone(e.target.value)}
+                          placeholder="Contoh: 0812345678"
+                          className="w-full bg-navy-deep border border-navy-light rounded-xl px-4 py-3 text-xs text-slate-100 placeholder-slate-600 focus:border-[#D4A017] focus:ring-1 focus:ring-[#D4A017] outline-none transition-all"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] uppercase tracking-wider text-slate-400 font-bold mb-1 font-mono">
+                          Spesifikasi Mobil yang Dicari
+                        </label>
+                        <textarea
+                          rows={4}
+                          value={contactMessage}
+                          onChange={(e) => setContactMessage(e.target.value)}
+                          placeholder="Contoh: Saya sedang mencari Toyota Fortuner VRZ Diesel AT Tahun 2019-2021, warna hitam plat L asli tgn 1. Anggaran maksimal 390jt."
+                          className="w-full bg-navy-deep border border-navy-light rounded-xl px-4 py-3 text-xs text-slate-100 placeholder-slate-600 resize-none focus:border-[#D4A017] focus:ring-1 focus:ring-[#D4A017] outline-none transition-all font-sans"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full bg-accent-red hover:bg-[#C0392B] text-white py-3 px-4 rounded-xl text-xs font-sans font-black uppercase tracking-widest transition-all duration-200 cursor-pointer shadow-lg shadow-red-950/20 hover:scale-[1.01] flex items-center justify-center gap-2"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      <span>Kirim Permintaan Konsultasi</span>
+                    </button>
+                  </form>
+                )}
+
               </div>
 
             </div>
 
-            {/* Inquire submission contact form - 7 columns */}
-            <div className="lg:col-span-7 bg-navy-card border border-navy-light rounded-lg p-6 sm:p-8 space-y-4 shadow-xl">
-              <h3 className="font-sans font-black text-base text-slate-100 uppercase tracking-wider">
-                Ingin Konsultasi atau Cari Unit Spesifik?
-              </h3>
-              <p className="text-slate-400 text-xs leading-relaxed">
-                Silakan isi formulir di bawah ini. Tim Sales Specialist kami akan langsung menghubungi Anda di WhatsApp dalam kurun waktu kurang dari 10 menit!
-              </p>
+            {/* Premium Visit FAQs Section for JBM Visitors (Solves making it look more interesting!) */}
+            <div className="space-y-6 pt-6 text-left border-t border-white/5">
+              <div className="space-y-1.5">
+                <span className="text-[9px] font-mono text-accent-red uppercase tracking-widest font-bold">HELPFUL FREQUENTLY ASKED QUESTIONS</span>
+                <h3 className="font-sans font-black text-lg text-slate-100 uppercase tracking-tight">
+                  💡 Tips & Panduan Berkunjung Ke Showroom Kami
+                </h3>
+              </div>
 
-              {formSubmitted ? (
-                <div className="bg-emerald-600/10 border border-emerald-500/20 p-8 text-center rounded space-y-2 text-emerald-400">
-                  <span className="text-xl">✅</span>
-                  <h4 className="font-sans font-bold text-sm">Pesan Terkirim!</h4>
-                  <p className="text-xs text-slate-300">Menghubungkan langsung dengan Customer Care via WhatsApp...</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <div className="bg-[#0b101c] p-5 rounded-2xl border border-white/5 space-y-2">
+                  <div className="w-8 h-8 rounded-lg bg-red-950/25 border border-red-500/10 flex items-center justify-center text-accent-red text-xs font-bold font-mono">
+                    01
+                  </div>
+                  <h4 className="font-sans font-black text-xs text-slate-200 uppercase tracking-wide">
+                    Apakah Bisa Tes Drive Unit Sebelum Deal?
+                  </h4>
+                  <p className="text-[11px] text-gray-400 leading-relaxed">
+                    Tentu saja bisa! Seluruh mobil kami bebas dipersiapkan untuk test drive secara langsung agar Anda mantap merasakan performa mesin kemudi, transmisi, dan kaki-kaki unit. Pastikan membawa SIM A aktif guna kenyamanan pendampingan.
+                  </p>
                 </div>
-              ) : (
-                <form onSubmit={handleContactSubmit} className="space-y-4 text-left">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">
-                        Nama Lengkap Anda
-                      </label>
-                      <input
-                        type="text"
-                        value={contactName}
-                        onChange={(e) => setContactName(e.target.value)}
-                        placeholder="Contoh: Bapak Wijaya"
-                        className="w-full bg-navy-deep border border-navy-light rounded px-3 py-2 text-xs text-slate-100 focus:border-accent-red outline-none transition-colors placeholder-slate-500"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">
-                        Nomor WhatsApp Serta HP
-                      </label>
-                      <input
-                        type="tel"
-                        value={contactPhone}
-                        onChange={(e) => setContactPhone(e.target.value)}
-                        placeholder="Contoh: 0812XXXXXXXX"
-                        className="w-full bg-navy-deep border border-navy-light rounded px-3 py-2 text-xs text-slate-100 focus:border-accent-red outline-none transition-colors placeholder-slate-500"
-                        required
-                      />
-                    </div>
+
+                <div className="bg-[#0b101c] p-5 rounded-2xl border border-white/5 space-y-2">
+                  <div className="w-8 h-8 rounded-lg bg-amber-950/25 border border-[#D4A017]/10 flex items-center justify-center text-[#D4A017] text-xs font-bold font-mono">
+                    02
                   </div>
+                  <h4 className="font-sans font-black text-xs text-slate-200 uppercase tracking-wide">
+                    Periksa Unit Ke Bengkel Resmi / Pihak Ketiga?
+                  </h4>
+                  <p className="text-[11px] text-gray-400 leading-relaxed">
+                    JBM sangat mengedepankan keterbukaan transparansi tinggi. Kami sangat mempersilakan jika Anda ingin menyewa jasa inspektor independen (seperti Otospector) atau membawa unit ke bengkel resmi terdekat untuk proses check-up sasis dan data log elektrikal.
+                  </p>
+                </div>
 
-                  <div>
-                    <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">
-                      Pesan atau Mobil yang Diminati (Opsional)
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={contactMessage}
-                      onChange={(e) => setContactMessage(e.target.value)}
-                      placeholder="Contoh: Saya sedang mencari Toyota Innova diesel 2021 bertransmisi matic, kisaran budget berapa ya?"
-                      className="w-full bg-navy-deep border border-navy-light rounded px-3 py-2 text-xs text-slate-100 resize-none focus:border-accent-red outline-none transition-colors placeholder-slate-500"
-                    />
+                <div className="bg-[#0b101c] p-5 rounded-2xl border border-white/5 space-y-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-950/25 border border-blue-500/10 flex items-center justify-center text-blue-400 text-xs font-bold font-mono">
+                    03
                   </div>
+                  <h4 className="font-sans font-black text-xs text-slate-200 uppercase tracking-wide">
+                    Kelengkapan Dokumen BPKB & Pajak STNK?
+                  </h4>
+                  <p className="text-[11px] text-gray-400 leading-relaxed">
+                    Jaminan keabsahan dokumen kami garansi penuh 100%! Semua unit memiliki BPKB, STNK, Faktur Pembelian Asli, Buku Servis, serta kunci cadangan yang tersimpan aman di brankas showroom JBM. Kami menjamin dokumen siap divalidasi ke Samsat Surabaya kapan saja.
+                  </p>
+                </div>
 
-                  <button
-                    type="submit"
-                    className="w-full bg-accent-red hover:bg-[#C0392B] text-white py-3 rounded text-xs font-sans font-black uppercase tracking-widest transition-colors duration-205 cursor-pointer shadow-lg shadow-red-950/20"
-                  >
-                    Kirim Form via WhatsApp
-                  </button>
-                </form>
-              )}
-
+              </div>
             </div>
 
           </div>
+        );
+      })()}
 
-        </div>
-      )}
 
       {/* ──────────────────────────────────────────────────────────────────────── */}
       {/* FOOTER */}
@@ -1084,6 +1365,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </footer>
       )}
+
+      {/* Spec details card dialog modal popup */}
+      <CarDetailModal car={selectedCar} onClose={() => setSelectedCar(null)} />
 
     </div>
   );

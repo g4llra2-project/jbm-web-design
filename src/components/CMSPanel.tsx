@@ -4,6 +4,7 @@ import {
   MessageSquare, FileText, Info, CheckSquare, X 
 } from 'lucide-react';
 import { CMSData, Car as CarType, Testimonial, BlogArticle, HallOfFameItem } from '../types';
+import { ImageUploader } from './ImageUploader';
 
 interface CMSPanelProps {
   cmsData: CMSData;
@@ -12,7 +13,7 @@ interface CMSPanelProps {
 }
 
 export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'hero' | 'stok' | 'testimoni' | 'artikel' | 'kontak'>('hero');
+  const [activeSubTab, setActiveSubTab] = useState<'hero' | 'stok' | 'testimoni' | 'artikel' | 'kontak' | 'sales' | 'hof'>('hero');
   const [editingCarId, setEditingCarId] = useState<string | null>(null);
 
   // Car Form Local States
@@ -27,6 +28,7 @@ export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }
   const [carBadge, setCarBadge] = useState<'BARU MASUK' | 'HOT' | 'SOLD' | 'NONE'>('BARU MASUK');
   const [carIsSold, setCarIsSold] = useState(false);
   const [carImage, setCarImage] = useState('sedan');
+  const [carDetailImages, setCarDetailImages] = useState<string[]>(['', '', '', '']);
 
   // Hall of Fame Form Local States
   const [editingHofId, setEditingHofId] = useState<string | null>(null);
@@ -75,6 +77,9 @@ export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }
       return;
     }
 
+    // Filter out any completely empty details
+    const cleanDetailImages = carDetailImages.filter(url => url.trim() !== '');
+
     if (editingCarId) {
       // Modify existing
       const updatedCars = cmsData.cars.map(c => {
@@ -91,7 +96,8 @@ export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }
             engineCc: carCc,
             badge: carBadge,
             isSold: carIsSold,
-            image: carImage || 'sedan'
+            image: carImage || 'sedan',
+            detailImages: cleanDetailImages
           };
         }
         return c;
@@ -113,7 +119,8 @@ export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }
         image: carImage || 'sedan',
         fuelType: carFuel,
         isSold: carIsSold,
-        engineCc: carCc
+        engineCc: carCc,
+        detailImages: cleanDetailImages
       };
       onChange({ ...cmsData, cars: [newCar, ...cmsData.cars] });
       showNotification('Unit baru berhasil ditambahkan!');
@@ -136,6 +143,14 @@ export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }
     setCarBadge(car.badge);
     setCarIsSold(car.isSold);
     setCarImage(car.image || 'sedan');
+    
+    // Format up to 4 detailed images
+    const existingDetails = car.detailImages || [];
+    const paddedDetails = [...existingDetails];
+    while (paddedDetails.length < 4) {
+      paddedDetails.push('');
+    }
+    setCarDetailImages(paddedDetails);
   };
 
   const handleDeleteCar = (carId: string) => {
@@ -159,6 +174,7 @@ export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }
     setCarBadge('BARU MASUK');
     setCarIsSold(false);
     setCarImage('sedan');
+    setCarDetailImages(['', '', '', '']);
   };
 
   const handleSaveHof = (e: React.FormEvent) => {
@@ -280,27 +296,31 @@ export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }
         </div>
       )}
 
-      {/* Sub Tabs Menu - Horizontal overflow-x-auto */}
-      <div className="flex border-b border-white/5 bg-[#0e172a] overflow-x-auto shrink-0 scrollbar-none">
-        {( [
-          { id: 'hero', label: '🚀 Hero & General' },
+      {/* Sub Tabs Menu - 4-Column Grid to ensure all 7 tabs + 1 placeholder are fully visible */}
+      <div className="grid grid-cols-4 gap-[1px] bg-white/5 border-b border-white/5 shrink-0">
+        {[
+          { id: 'hero', label: '🚀 General' },
           { id: 'stok', label: '🚘 Stok Mobil' },
           { id: 'testimoni', label: '⭐ Testimoni' },
+          { id: 'hof', label: '🏆 Hall of Fame' },
           { id: 'artikel', label: '📰 Artikel' },
+          { id: 'sales', label: '👤 Sales Team' },
           { id: 'kontak', label: '📍 Alamat' }
-        ] as const).map(tab => (
+        ].map(tab => (
           <button
             key={tab.id}
-            onClick={() => setActiveSubTab(tab.id)}
-            className={`px-4 py-3 text-[10px] font-sans font-bold uppercase tracking-wider whitespace-nowrap outline-none transition-all duration-150
+            onClick={() => setActiveSubTab(tab.id as any)}
+            className={`py-3 text-[8px] sm:text-[9px] font-sans font-black uppercase tracking-wider text-center outline-none transition-all duration-150 flex flex-col items-center justify-center gap-1
               ${activeSubTab === tab.id 
-                ? 'bg-[#152342] text-[#F0C040] border-b-2 border-[#D4A017]' 
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                ? 'bg-[#152342] text-[#F0C040] font-sans border-b-2 border-[#D4A017]' 
+                : 'bg-[#0e172a] text-gray-400 hover:text-white hover:bg-white/5'
               }`}
           >
-            {tab.label}
+            <span>{tab.label}</span>
           </button>
         ))}
+        {/* Empty placeholder to complete the 8-cell layout (4x2) */}
+        <div className="bg-[#0e172a] border-b border-transparent" />
       </div>
 
       {/* CMS content block - scrollable */}
@@ -327,34 +347,17 @@ export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }
               </div>
 
               <div>
-                <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">
-                  Gambar Latar Belakang Hero (Background Canvas)
-                </label>
-                <div className="space-y-2">
-                  <select
-                    value={cmsData.hero.backgroundImage || 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=2000&q=90'}
-                    onChange={(e) => {
-                      if (e.target.value !== 'custom') {
-                        updateHero('backgroundImage', e.target.value);
-                      }
-                    }}
-                    className="w-full bg-[#101c33] border border-white/10 rounded px-3 py-2 text-xs text-white focus:border-[#D4A017] outline-none select-none"
-                  >
-                    <option value="https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=2000&q=90">Porsche Headlight (Default Gelap)</option>
-                    <option value="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=2000&q=90">Classic Sportscar Abstract (Detail Mewah)</option>
-                    <option value="https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=2000&q=90">Sleek Premium BMW Reflection (Minimalis)</option>
-                    <option value="https://images.unsplash.com/photo-1562577309-4932fdd64cd1?auto=format&fit=crop&w=2000&q=90">Elegant Showroom Interior (Pencahayaan Studio)</option>
-                    <option value="https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=2000&q=90">Sportcar Speed Dark Profile (Agresif)</option>
-                    <option value="custom">★ URL Kustom (Gunakan Input di Bawah)</option>
-                  </select>
-                  <input
-                    type="text"
-                    value={cmsData.hero.backgroundImage || ''}
-                    placeholder="Atau tempel Link URL gambar kustom Anda di sini..."
-                    onChange={(e) => updateHero('backgroundImage', e.target.value)}
-                    className="w-full bg-[#101c33] border border-white/10 rounded px-3 py-2 text-xs text-[#F0C040] focus:border-[#D4A017] outline-none"
-                  />
-                </div>
+                <ImageUploader
+                  label="Gambar Latar Belakang Hero (Background Canvas)"
+                  currentValue={cmsData.hero.backgroundImage || ''}
+                  onChange={(val) => updateHero('backgroundImage', val)}
+                  presetOptions={[
+                    { label: 'Porsche Headlight (Default)', url: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=2000&q=90' },
+                    { label: 'Classic Sportscar Abstract', url: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=2000&q=90' },
+                    { label: 'Sleek Premium BMW Reflection', url: 'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=2000&q=90' },
+                    { label: 'Elegant Showroom Interior', url: 'https://images.unsplash.com/photo-1562577309-4932fdd64cd1?auto=format&fit=crop&w=2000&q=90' }
+                  ]}
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -486,77 +489,51 @@ export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }
                 </div>
 
                 {/* Picture Settings Input Field with Beautiful Live Preview */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Gambar / Preset Mobil</label>
-                    <select
-                      value={['innova', 'jazz', 'veloz', 'xpander', 'fortuner', 'brio', 'sedan'].includes(carImage.toLowerCase()) ? carImage.toLowerCase() : 'custom'}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val !== 'custom') {
-                          setCarImage(val);
-                        } else {
-                          // set to sample unsplash link if user chooses custom for the first time
-                          setCarImage('https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80');
-                        }
-                      }}
-                      className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1.5 text-xs text-white focus:border-[#D4A017] select-none"
-                    >
-                      <option value="sedan">Sedan (Sleek Vector)</option>
-                      <option value="innova">Toyota Innova (Real Photo)</option>
-                      <option value="jazz">Honda Jazz (Real Photo)</option>
-                      <option value="veloz">Toyota Veloz (Real Photo)</option>
-                      <option value="xpander">Mitsubishi Xpander (Real Photo)</option>
-                      <option value="fortuner">Toyota Fortuner (Real Photo)</option>
-                      <option value="brio">Honda Brio (Real Photo)</option>
-                      <option value="custom">★ Link Direct URL Gambar</option>
-                    </select>
+                <ImageUploader
+                  label="Gambar / Foto Unit Utama (Thumbnail)"
+                  currentValue={carImage}
+                  onChange={(val) => setCarImage(val)}
+                  presetOptions={[
+                    { label: 'Sleek Vector Sedan', url: 'sedan' },
+                    { label: 'Toyota Innova', url: 'https://images.unsplash.com/photo-1606016159991-dfe4f974be5c?auto=format&fit=crop&w=800&q=80' },
+                    { label: 'Honda Jazz', url: 'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=800&q=80' },
+                    { label: 'Toyota Veloz', url: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80' },
+                    { label: 'Mitsubishi Xpander', url: 'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=800&q=80' },
+                    { label: 'Toyota Fortuner', url: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80' },
+                    { label: 'Honda Brio', url: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80' }
+                  ]}
+                />
+
+                {/* 4 Detail Images Multi-Uploader Section */}
+                <div className="bg-[#050914] border border-white/5 p-3 rounded-lg space-y-2">
+                  <div className="flex justify-between items-center border-b border-white/5 pb-1.5 mb-1">
+                    <span className="text-[10px] font-mono text-[#D4A017] uppercase tracking-[0.1em] font-black">
+                      ★ 4 GAMBAR ANGLE DETAIL (GALERI)
+                    </span>
+                    <span className="text-[8px] text-gray-500 font-mono">
+                      SLIDER MODEL POPUP
+                    </span>
                   </div>
-                  <div>
-                    <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Input URL Kustom (Opsional)</label>
-                    <input
-                      type="text"
-                      value={carImage.startsWith('http') ? carImage : ''}
-                      onChange={(e) => setCarImage(e.target.value)}
-                      placeholder="https://images.unsplash.com/..."
-                      className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1.5 text-xs text-white focus:border-[#D4A017]"
-                    />
+                  <p className="text-[9px] text-slate-400 leading-normal">
+                    Unggah atau tempel URL untuk 4 sudut / detail interior mobil agar pembeli dapat melihat spesifikasi lengkap di menu detail.
+                  </p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                    {carDetailImages.map((imgUrl, idx) => (
+                      <div key={idx} className="bg-[#0b101c]/90 p-2 rounded border border-white/5">
+                        <ImageUploader
+                          label={`Gambar Detail #${idx + 1}`}
+                          currentValue={imgUrl}
+                          onChange={(val) => {
+                            const updated = [...carDetailImages];
+                            updated[idx] = val;
+                            setCarDetailImages(updated);
+                          }}
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
-
-                {carImage && (
-                  <div className="mt-1 p-2 bg-[#090e1c] border border-white/5 rounded flex items-center gap-3">
-                    <div className="w-16 h-10 rounded overflow-hidden bg-navy-deep relative flex-shrink-0 border border-white/10">
-                      {carImage.startsWith('http') ? (
-                        <img src={carImage} alt="Preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                      ) : ['innova', 'jazz', 'veloz', 'xpander', 'fortuner', 'brio'].includes(carImage.toLowerCase()) ? (
-                        <img 
-                          src={
-                            carImage.toLowerCase() === 'innova' ? "https://images.unsplash.com/photo-1606016159991-dfe4f974be5c?auto=format&fit=crop&w=150&q=80" :
-                            carImage.toLowerCase() === 'jazz' ? "https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=150&q=80" :
-                            carImage.toLowerCase() === 'veloz' ? "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=150&q=80" :
-                            carImage.toLowerCase() === 'xpander' ? "https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=150&q=80" :
-                            carImage.toLowerCase() === 'fortuner' ? "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=150&q=80" :
-                            "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=150&q=80" // brio
-                          } 
-                          alt="Preview" 
-                          className="w-full h-full object-cover" 
-                          referrerPolicy="no-referrer" 
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[8px] font-mono text-gray-500 bg-[#0c162a] uppercase">
-                          Vector
-                        </div>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[9px] font-bold text-gray-300">Pratinjau Visual Terpilih</div>
-                      <div className="text-[8px] font-mono text-gray-500 truncate">
-                        {carImage}
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -706,15 +683,18 @@ export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }
           </div>
         )}
 
-        {/* ── SUB TAB: TESTIMONI & HALL OF FAME ── */}
+        {/* ── SUB TAB: TESTIMONI ── */}
         {activeSubTab === 'testimoni' && (
           <div className="space-y-6 animate-fadeIn">
             
             {/* Section 1: Standard text testimonials */}
             <div className="space-y-3">
               <h3 className="text-xs font-mono uppercase tracking-wider text-[#D4A017] border-b border-white/5 pb-2">
-                Review Google Kantor Showroom
+                ⭐⭐ Review Google Showroom JBM
               </h3>
+              <p className="text-[10px] text-gray-400 mt-1 leading-normal text-left">
+                Manajemen review google bintang 5 yang diambil dari Google Maps Showroom Surabaya Wiyung dan DTC Mall Wonokromo.
+              </p>
 
               {cmsData.testimonials.map((t, index) => (
                 <div key={t.id} className="bg-[#111a30] p-3 rounded border border-white/5 space-y-2 text-left">
@@ -732,205 +712,186 @@ export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }
                 </div>
               ))}
             </div>
+          </div>
+        )}
 
-            {/* Section 2: Hall of fame with images */}
-            <div className="space-y-4 pt-2 border-t border-white/5">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-mono uppercase tracking-wider text-[#D4A017]">
-                  Sahabat JBM (Hall of Fame Gallery)
-                </h3>
-                {editingHofId && (
-                  <button 
-                    onClick={resetHofForm}
-                    className="text-[9px] font-bold text-red-400 hover:underline uppercase tracking-wide cursor-pointer"
-                  >
-                    Batal Edit
-                  </button>
-                )}
+        {/* ── SUB TAB: HALL OF FAME ── */}
+        {activeSubTab === 'hof' && (
+          <div className="space-y-6 animate-fadeIn text-left pb-6">
+            <div className="border-b border-white/5 pb-2">
+              <h3 className="text-xs font-mono uppercase tracking-wider text-[#D4A017]">
+                🏆 Sahabat JBM (Hall of Fame)
+              </h3>
+              <p className="text-[10px] text-gray-400 mt-1 leading-normal">
+                Di sini Anda bisa mengelola daftar pembeli bahagia JBM yang tampil di halaman "Hall Of Fame". Anda dapat menambahkan foto serah terima/delivery, ulasan langsung, dan bintang kepuasan pelanggan secara live!
+              </p>
+              {editingHofId && (
+                <button 
+                  onClick={resetHofForm}
+                  className="mt-2 text-[9px] font-bold text-red-400 hover:underline uppercase tracking-wide cursor-pointer flex items-center gap-1"
+                >
+                  Batal Edit (ID: {editingHofId})
+                </button>
+              )}
+            </div>
+
+            {/* Form to insert/modify HOF unit delivery details */}
+            <form onSubmit={handleSaveHof} className="bg-[#101c33]/70 border border-white/10 rounded-lg p-3 space-y-3">
+              <div className="text-[10px] font-sans font-bold text-gray-300 uppercase tracking-widest pb-1 border-b border-white/5 flex items-center justify-between border-b border-white/5 pb-1">
+                <span>{editingHofId ? '✍️ Edit Sahabat JBM' : '➕ Tambah Sahabat JBM baru'}</span>
               </div>
 
-              {/* Form to insert/modify HOF unit delivery details */}
-              <form onSubmit={handleSaveHof} className="bg-[#101c33]/70 border border-white/10 rounded-lg p-3 space-y-3">
-                <div className="text-[10px] font-sans font-bold text-gray-300 uppercase tracking-widest pb-1 border-b border-white/5 flex items-center justify-between">
-                  <span>{editingHofId ? '✍️ Edit Sahabat JBM' : '➕ Tambah Sahabat JBM'}</span>
-                  {editingHofId && <span className="text-[9px] text-yellow-500 font-mono">ID: {editingHofId}</span>}
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Nama Pelanggan / Keluarga</label>
-                    <input
-                      type="text"
-                      value={hofName}
-                      onChange={(e) => setHofName(e.target.value)}
-                      placeholder="Misal: Bpk. Rudi Wijaya"
-                      className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1.5 text-xs text-white focus:border-[#D4A017]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Unit Mobil Dibeli</label>
-                    <input
-                      type="text"
-                      value={hofCarName}
-                      onChange={(e) => setHofCarName(e.target.value)}
-                      placeholder="Misal: Innova Reborn Diesel AT"
-                      className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1.5 text-xs text-white focus:border-[#D4A017]"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="col-span-2">
-                    <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Alamat Kotak (Gresik/Surabaya)</label>
-                    <input
-                      type="text"
-                      value={hofLocation}
-                      onChange={(e) => setHofLocation(e.target.value)}
-                      placeholder="Misal: Wiyung, Surabaya"
-                      className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1.5 text-xs text-white focus:border-[#D4A017]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Bintang Rating</label>
-                    <select
-                      value={hofRating}
-                      onChange={(e) => setHofRating(Number(e.target.value))}
-                      className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1.5 text-xs text-white focus:border-[#D4A017] select-none"
-                    >
-                      <option value="5">⭐⭐⭐⭐⭐ (5)</option>
-                      <option value="4">⭐⭐⭐⭐ (4)</option>
-                      <option value="3">⭐⭐⭐ (3)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="col-span-1">
-                    <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Bulan Tahun</label>
-                    <input
-                      type="text"
-                      value={hofDate}
-                      onChange={(e) => setHofDate(e.target.value)}
-                      placeholder="Misal: Mei 2026"
-                      className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1.5 text-xs text-white focus:border-[#D4A017]"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Link URL Foto Serah Terima</label>
-                    <input
-                      type="text"
-                      value={hofImageUrl}
-                      onChange={(e) => setHofImageUrl(e.target.value)}
-                      placeholder="https://images.unsplash.com/photo-..."
-                      className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1.5 text-xs text-white focus:border-[#D4A017]"
-                    />
-                  </div>
-                </div>
-
-                {/* Predefined handshake presets for easy image linking */}
-                <div className="bg-[#050914] p-2 border border-white/5 rounded">
-                  <label className="block text-[8px] uppercase tracking-[0.12em] text-[#D4A017] font-bold mb-1">Preset Cepat Foto Car Delivery</label>
-                  <div className="flex flex-wrap gap-1">
-                    {[
-                      { label: 'Happy Couple', url: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80' },
-                      { label: 'Big Indonesian Family', url: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80' },
-                      { label: 'Business Professional', url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=800&q=80' },
-                      { label: 'Happy Single Buyer', url: 'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?auto=format&fit=crop&w=800&q=80' },
-                      { label: 'Indonesian Handshake', url: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=800&q=80' }
-                    ].map(u => (
-                      <button
-                        type="button"
-                        key={u.label}
-                        onClick={() => setHofImageUrl(u.url)}
-                        className="text-[8px] font-bold uppercase border border-white/10 hover:border-gold-accent hover:text-white bg-[#0e172a] px-1.5 py-0.5 rounded cursor-pointer truncate max-w-[120px]"
-                        title={u.url}
-                      >
-                        {u.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Testimonial Quote Singkat</label>
-                  <textarea
-                    rows={3}
-                    value={hofQuote}
-                    onChange={(e) => setHofQuote(e.target.value)}
-                    placeholder="Contoh: Sangat puas beli mobil di JBM, pengerjaan salon rapi, unit bebas karat, surat-surat super lengkap dilayani baik."
-                    className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1.5 text-xs text-white focus:border-[#D4A017] outline-none resize-none font-sans"
+                  <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Nama Pelanggan / Keluarga</label>
+                  <input
+                    type="text"
+                    value={hofName}
+                    onChange={(e) => setHofName(e.target.value)}
+                    placeholder="Misal: Bpk. Rudi Wijaya"
+                    className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2.5 py-1.5 text-xs text-white focus:border-[#D4A017] outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Unit Mobil Dibeli</label>
+                  <input
+                    type="text"
+                    value={hofCarName}
+                    onChange={(e) => setHofCarName(e.target.value)}
+                    placeholder="Misal: Innova Reborn Diesel AT"
+                    className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2.5 py-1.5 text-xs text-white focus:border-[#D4A017] outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-2">
+                  <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Alamat Kotak (Gresik/Surabaya)</label>
+                  <input
+                    type="text"
+                    value={hofLocation}
+                    onChange={(e) => setHofLocation(e.target.value)}
+                    placeholder="Misal: Wiyung, Surabaya"
+                    className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2.5 py-1.5 text-xs text-white focus:border-[#D4A017] outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Bintang Rating</label>
+                  <select
+                    value={hofRating}
+                    onChange={(e) => setHofRating(Number(e.target.value))}
+                    className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1.5 text-xs text-white focus:border-[#D4A017] outline-none select-none"
+                  >
+                    <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                    <option value="4">⭐⭐⭐⭐ (4)</option>
+                    <option value="3">⭐⭐⭐ (3)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3">
+                <div>
+                  <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Bulan Tahun Pembelian</label>
+                  <input
+                    type="text"
+                    value={hofDate}
+                    onChange={(e) => setHofDate(e.target.value)}
+                    placeholder="Misal: Mei 2026"
+                    className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2.5 py-1.5 text-xs text-white focus:border-[#D4A017] outline-none"
                   />
                 </div>
 
-                <div className="flex gap-2">
-                  <button 
-                    type="submit"
-                    className="flex-grow bg-[#D4A017] hover:bg-[#b08412] text-navy-deep font-bold px-3 py-2 rounded text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <Save className="w-4 h-4" />
-                    <span>{editingHofId ? 'Perbarui Sahabat' : 'Posting Sahabat JBM'}</span>
-                  </button>
-                  {editingHofId && (
-                    <button 
-                      type="button"
-                      onClick={resetHofForm}
-                      className="bg-navy-deep hover:bg-white/5 border border-white/10 text-gray-300 px-3 py-2 rounded text-xs font-bold uppercase transition-all cursor-pointer"
-                    >
-                      Batal
-                    </button>
-                  )}
-                </div>
-              </form>
-
-              {/* LIST OF EXISTING HOF ITEMS */}
-              <div className="space-y-2 pt-2">
-                <div className="text-[10px] font-mono text-gray-400 uppercase tracking-widest text-left">
-                  Daftar Pameran Terpasang (Count: { (cmsData.hallOfFame || []).length })
-                </div>
-
-                <div className="space-y-2 max-h-72 overflow-y-auto">
-                  {(cmsData.hallOfFame || []).map((item) => (
-                    <div key={item.id} className="bg-[#111a30] p-2.5 rounded border border-white/5 flex items-center justify-between gap-3 text-left">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-12 h-9 rounded bg-[#0a0f1d] overflow-hidden flex-shrink-0 border border-white/10">
-                          <img 
-                            src={item.imageUrl} 
-                            alt={item.name} 
-                            className="w-full h-full object-cover" 
-                            referrerPolicy="no-referrer"
-                          />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[10px] font-bold text-white truncate leading-tight uppercase">{item.name}</p>
-                          <p className="text-[9px] font-mono text-accent-red font-bold truncate leading-tight mt-0.5">{item.carName}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex gap-1">
-                        <button
-                          type="button"
-                          onClick={() => startEditHof(item)}
-                          className="p-1 px-1.5 bg-blue-900/30 text-blue-400 border border-blue-500/20 rounded hover:bg-blue-800/40 cursor-pointer"
-                          title="Edit"
-                        >
-                          <Edit className="w-3 h-3" />
-                         </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteHof(item.id)}
-                          className="p-1 px-1.5 bg-red-950/40 text-red-500 border border-red-500/10 rounded hover:bg-red-900/60 cursor-pointer"
-                          title="Hapus"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <ImageUploader
+                  label="Foto Serah Terima Unit (Delivery)"
+                  currentValue={hofImageUrl}
+                  onChange={(val) => setHofImageUrl(val)}
+                  presetOptions={[
+                    { label: 'Happy Couple', url: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80' },
+                    { label: 'Big Indonesian Family', url: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80' },
+                    { label: 'Business Professional', url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=800&q=80' },
+                    { label: 'Happy Single Buyer', url: 'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?auto=format&fit=crop&w=800&q=80' },
+                    { label: 'Indonesian Handshake', url: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=800&q=80' }
+                  ]}
+                />
               </div>
 
-            </div>
+              <div>
+                <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Testimonial Quote Singkat</label>
+                <textarea
+                  rows={3}
+                  value={hofQuote}
+                  onChange={(e) => setHofQuote(e.target.value)}
+                  placeholder="Contoh: Sangat puas beli mobil di JBM, pengerjaan salon rapi, unit bebas karat, surat-surat super lengkap dilayani baik."
+                  className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2.5 py-1.5 text-xs text-white focus:border-[#D4A017] outline-none resize-none font-sans"
+                />
+              </div>
 
+              <div className="flex gap-2">
+                <button 
+                  type="submit"
+                  className="flex-grow bg-[#D4A017] hover:bg-[#b08412] text-navy-deep font-bold px-3 py-2 rounded text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{editingHofId ? 'Perbarui Sahabat' : 'Posting Sahabat JBM'}</span>
+                </button>
+                {editingHofId && (
+                  <button 
+                    type="button"
+                    onClick={resetHofForm}
+                    className="bg-navy-deep hover:bg-white/5 border border-white/10 text-gray-300 px-3 py-2 rounded text-xs font-bold uppercase transition-all cursor-pointer"
+                  >
+                    Batal
+                  </button>
+                )}
+              </div>
+            </form>
+
+            {/* LIST OF EXISTING HOF ITEMS */}
+            <div className="space-y-2 pt-2">
+              <div className="text-[10px] font-mono text-gray-400 uppercase tracking-widest text-left">
+                Daftar Pameran Terpasang (Count: { (cmsData.hallOfFame || []).length })
+              </div>
+
+              <div className="space-y-2 max-h-72 overflow-y-auto">
+                {(cmsData.hallOfFame || []).map((item) => (
+                  <div key={item.id} className="bg-[#111a30] p-2.5 rounded border border-white/5 flex items-center justify-between gap-3 text-left">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-12 h-9 rounded bg-[#0a0f1d] overflow-hidden flex-shrink-0 border border-white/10">
+                        <img 
+                          src={item.imageUrl} 
+                          alt={item.name} 
+                          className="w-full h-full object-cover" 
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-bold text-white truncate leading-tight uppercase">{item.name}</p>
+                        <p className="text-[9px] font-mono text-accent-red font-bold truncate leading-tight mt-0.5">{item.carName}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => startEditHof(item)}
+                        className="p-1 px-1.5 bg-blue-900/30 text-blue-400 border border-blue-500/20 rounded hover:bg-blue-800/40 cursor-pointer"
+                        title="Edit"
+                      >
+                        <Edit className="w-3 h-3" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteHof(item.id)}
+                        className="p-1 px-1.5 bg-red-950/40 text-red-500 border border-red-500/10 rounded hover:bg-red-900/60 cursor-pointer"
+                        title="Hapus"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
@@ -1037,6 +998,163 @@ export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }
                   className="w-full bg-[#101c33] border border-white/10 rounded px-3 py-2 text-xs text-white focus:border-[#D4A017]"
                 />
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── SUB TAB: SALES ADVISOR ── */}
+        {activeSubTab === 'sales' && (
+          <div className="space-y-6 animate-fadeIn text-left pb-6">
+            <div className="border-b border-white/5 pb-2">
+              <h3 className="text-xs font-mono uppercase tracking-wider text-[#D4A017]">
+                👤 Manajemen Sales Advisor & Team
+              </h3>
+              <p className="text-[10px] text-gray-400 mt-1 leading-normal">
+                Berikut adalah 5 Advisor JBM yang tampil di halaman Profil. Anda bisa memperbarui foto, nama, spesialisasi, dan performa mereka di sini secara live.
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              {(cmsData.advisors || []).map((advisor, index) => (
+                <div key={advisor.id} className="bg-[#111a30] p-4 rounded-xl border border-white/5 space-y-4 shadow-xl">
+                  <div className="flex justify-between items-center bg-[#0a0f1d] px-2 py-1.5 rounded">
+                    <span className="text-[10px] font-mono text-[#D4A017] font-black uppercase tracking-wider">
+                      Sales #{index + 1}: {advisor.name || 'Tanpa Nama'}
+                    </span>
+                    <span className="text-[8px] text-gray-400 font-mono tracking-widest bg-white/5 px-2 py-0.5 rounded">
+                      ID: {advisor.id}
+                    </span>
+                  </div>
+
+                  {/* Avatar upload using ImageUploader */}
+                  <ImageUploader
+                    label="Foto Profil Sales Advisor"
+                    currentValue={advisor.avatar}
+                    onChange={(val) => {
+                      const updated = (cmsData.advisors || []).map(a => 
+                        a.id === advisor.id ? { ...a, avatar: val } : a
+                      );
+                      onChange({ ...cmsData, advisors: updated });
+                    }}
+                    presetOptions={[
+                      { label: 'Male Portrait 1', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&h=400&q=80' },
+                      { label: 'Male Portrait 2', url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&h=400&q=80' },
+                      { label: 'Female Portrait 1', url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&h=400&q=80' },
+                      { label: 'Male Portrait 3', url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&h=400&q=80' },
+                      { label: 'Male Portrait 4', url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&h=400&q=80' }
+                    ]}
+                  />
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Nama Advisor</label>
+                      <input
+                        type="text"
+                        value={advisor.name}
+                        onChange={(e) => {
+                          const updated = (cmsData.advisors || []).map(a => 
+                            a.id === advisor.id ? { ...a, name: e.target.value } : a
+                          );
+                          onChange({ ...cmsData, advisors: updated });
+                        }}
+                        className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2.5 py-1.5 text-xs text-white focus:border-[#D4A017] outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Jabatan (Badge)</label>
+                      <input
+                        type="text"
+                        value={advisor.badge}
+                        onChange={(e) => {
+                          const updated = (cmsData.advisors || []).map(a => 
+                            a.id === advisor.id ? { ...a, badge: e.target.value } : a
+                          );
+                          onChange({ ...cmsData, advisors: updated });
+                        }}
+                        className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2.5 py-1.5 text-xs text-white focus:border-[#D4A017] outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">No WhatsApp (62xxx - Tanpa Spasi/Plus)</label>
+                      <input
+                        type="text"
+                        value={advisor.phone}
+                        onChange={(e) => {
+                          const updated = (cmsData.advisors || []).map(a => 
+                            a.id === advisor.id ? { ...a, phone: e.target.value.replace(/[^0-9]/g, '') } : a
+                          );
+                          onChange({ ...cmsData, advisors: updated });
+                        }}
+                        className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2.5 py-1.5 text-xs text-white focus:border-[#D4A017] outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Penempatan Showroom</label>
+                      <select
+                        value={advisor.area}
+                        onChange={(e) => {
+                          const updated = (cmsData.advisors || []).map(a => 
+                            a.id === advisor.id ? { ...a, area: e.target.value } : a
+                          );
+                          onChange({ ...cmsData, advisors: updated });
+                        }}
+                        className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2.5 py-1.5 text-xs text-white focus:border-[#D4A017] outline-none select-none"
+                      >
+                        <option value="Showroom Wiyung">Showroom Wiyung</option>
+                        <option value="Showroom DTC">Showroom DTC</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Rating</label>
+                      <input
+                        type="text"
+                        value={advisor.rating}
+                        onChange={(e) => {
+                          const updated = (cmsData.advisors || []).map(a => 
+                            a.id === advisor.id ? { ...a, rating: e.target.value } : a
+                          );
+                          onChange({ ...cmsData, advisors: updated });
+                        }}
+                        className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1.5 text-xs text-white focus:border-[#D4A017] outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Total Terjual</label>
+                      <input
+                        type="text"
+                        value={advisor.sold}
+                        onChange={(e) => {
+                          const updated = (cmsData.advisors || []).map(a => 
+                            a.id === advisor.id ? { ...a, sold: e.target.value } : a
+                          );
+                          onChange({ ...cmsData, advisors: updated });
+                        }}
+                        className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1.5 text-xs text-white focus:border-[#D4A017] outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Niche Spesialis</label>
+                      <input
+                        type="text"
+                        value={advisor.specialty}
+                        onChange={(e) => {
+                          const updated = (cmsData.advisors || []).map(a => 
+                            a.id === advisor.id ? { ...a, specialty: e.target.value } : a
+                          );
+                          onChange({ ...cmsData, advisors: updated });
+                        }}
+                        className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1.5 text-xs text-white focus:border-[#D4A017] outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

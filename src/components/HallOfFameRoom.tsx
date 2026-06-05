@@ -5,6 +5,7 @@ import {
   ZoomIn, ZoomOut, RotateCcw, Hand, ExternalLink
 } from 'lucide-react';
 import { HallOfFameItem } from '../types';
+import { optimizeImageUrl } from '../utils/imageOptimizer';
 
 interface HallOfFameRoomProps {
   hallOfFameItems: HallOfFameItem[];
@@ -159,32 +160,8 @@ export const HallOfFameRoom: React.FC<HallOfFameRoomProps> = ({
         }} 
       />
 
-      {/* ──────────────────────────────────────────────────────────────────────── */}
-      {/* FLOATING HEADER (TOP LEFT): BACK TO HOME */}
-      {/* ──────────────────────────────────────────────────────────────────────── */}
-      <div className="absolute top-6 left-6 z-40">
-        <button 
-          onClick={() => setActiveTab('beranda')}
-          className="text-[10px] md:text-xs font-mono text-gray-400 hover:text-white uppercase tracking-[0.25em] font-black transition-all duration-200 flex items-center gap-1.5 cursor-pointer bg-black/60 backdrop-blur px-3 py-1.5 rounded border border-white/15 hover:border-white/40"
-        >
-          <span>← BACK TO HOME</span>
-        </button>
-      </div>
 
-      {/* ──────────────────────────────────────────────────────────────────────── */}
-      {/* FLOATING HEADER (TOP RIGHT): GET IN TOUCH (DIRECT ACCESSIBILITY LINK) */}
-      {/* ──────────────────────────────────────────────────────────────────────── */}
-      <div className="absolute top-6 right-6 z-40 flex items-center gap-2 md:gap-3.5">
-        <a 
-          href="https://wa.me/6281330253797?text=Halo%2520JBM%2520Surabaya!%2520Saya%2520membuka%2520halaman%2520Hall%2520of%2520Fame%2520dan%2520tertarik%2520berkonsultasi%2520mengenai%2520unit%2520mobil%2520bekas%2520berkualitas."
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="bg-black/80 hover:bg-white text-white hover:text-black border border-white/20 hover:border-white px-3.5 md:px-5 py-2 rounded-full text-[10px] font-sans font-black tracking-widest transition-all duration-250 flex items-center gap-2 shadow"
-        >
-          <span>GET IN TOUCH</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-        </a>
-      </div>
+      {/* Draggable Exhibition stage starts immediately to benefit from minimalist global Navbar */}
 
       {/* ──────────────────────────────────────────────────────────────────────── */}
       {/* DRAGGABLE MAIN INTERACTIVE EXHIBITION STAGE */}
@@ -330,10 +307,12 @@ export const HallOfFameRoom: React.FC<HallOfFameRoomProps> = ({
                     {/* Highly polished picture frame */}
                     <div className="w-full aspect-[4/3] overflow-hidden bg-[#0a0a0a] border border-white/5 relative">
                       <img 
-                        src={item.imageUrl} 
+                        src={optimizeImageUrl(item.imageUrl, 500, 70)} 
                         alt={item.name} 
                         className="w-full h-full object-cover filter brightness-[0.88] group-hover:brightness-100 transition-all duration-400"
                         referrerPolicy="no-referrer"
+                        loading="lazy"
+                        decoding="async"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
                     </div>
@@ -483,10 +462,11 @@ export const HallOfFameRoom: React.FC<HallOfFameRoomProps> = ({
             {/* Showcase title/image */}
             <div className="w-full h-64 bg-black rounded-lg overflow-hidden relative border border-white/15">
               <img 
-                src={selectedItem.imageUrl} 
+                src={optimizeImageUrl(selectedItem.imageUrl, 1000, 85)} 
                 alt={selectedItem.name} 
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
+                decoding="async"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent flex flex-col justify-end p-4">
                 

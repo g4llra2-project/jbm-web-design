@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, MessageCircle, Ruler, Sparkles } from 'lucide-react';
 import { HeroData, Car } from '../types';
+import { optimizeImageUrl } from '../utils/imageOptimizer';
 
 interface ParallaxHeroProps {
   heroData: HeroData;
@@ -67,9 +68,11 @@ export const ParallaxHero: React.FC<ParallaxHeroProps> = ({
       >
         <img 
           referrerPolicy="no-referrer"
-          src={heroBg} 
+          src={optimizeImageUrl(heroBg, 1600, 80)} 
           alt="JBM Studio Premium Automotive Canvas"
           className="w-full h-full object-cover opacity-60"
+          fetchPriority="high"
+          decoding="async"
         />
         
         {/* Deep architectural ambient vignette overlays for immaculate text legibility */}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { optimizeImageUrl } from '../utils/imageOptimizer';
 
 interface CarIllustrationProps {
   type: string;
@@ -30,13 +31,15 @@ export const CarIllustration: React.FC<CarIllustrationProps> = ({ type, brand, i
         
         {/* Real Car Image */}
         <img
-          src={imageUrl}
+          src={optimizeImageUrl(imageUrl, 450, 70)}
           alt={`${brand} ${type}`}
           onError={() => setImageFailed(true)}
           className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
             isSold ? 'opacity-40 grayscale blur-[1px]' : 'opacity-90 group-hover:opacity-100'
           }`}
           referrerPolicy="no-referrer"
+          loading="lazy"
+          decoding="async"
         />
 
         {/* Elegant overlay shadow on bottom */}

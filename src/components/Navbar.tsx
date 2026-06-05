@@ -25,6 +25,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [menuOpen, setMenuOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState('16:00');
 
+  const forceMinimal = isScrolled || activeTab === 'hall-of-fame';
+
   useEffect(() => {
     // Scroll Detection
     const handleScroll = () => {
@@ -78,17 +80,17 @@ export const Navbar: React.FC<NavbarProps> = ({
       <motion.header
         className="w-full bg-navy-card/90 border-b border-navy-light backdrop-blur-md relative z-40 transition-shadow duration-300"
         animate={{
-          y: isScrolled ? -140 : 0,
-          opacity: isScrolled ? 0 : 1,
+          y: forceMinimal ? -140 : 0,
+          opacity: forceMinimal ? 0 : 1,
         }}
         transition={{
           duration: 0.35,
           ease: 'easeInOut'
         }}
         style={{
-          height: isScrolled ? 0 : 'auto',
-          overflow: isScrolled ? 'hidden' : 'visible',
-          pointerEvents: isScrolled ? 'none' : 'auto',
+          height: forceMinimal ? 0 : 'auto',
+          overflow: forceMinimal ? 'hidden' : 'visible',
+          pointerEvents: forceMinimal ? 'none' : 'auto',
         }}
       >
         {/* Top Announcement Bar */}
@@ -205,7 +207,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* 2. PREMIUM RESIZABLE MINIST DESIGNER NAVBAR (Visible when scrolled) */}
       {/* ──────────────────────────────────────────────────────────────────────── */}
       <AnimatePresence>
-        {isScrolled && (
+        {forceMinimal && (
           <motion.div
             className="fixed top-0 left-0 right-0 z-50 p-4 sm:p-6 pointer-events-none flex justify-between items-center"
             initial={{ y: -80, opacity: 0 }}
@@ -264,7 +266,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            className="fixed inset-0 z-50 bg-[#040404]/98 md:bg-[#020202]/98 backdrop-blur-2xl flex flex-col justify-between p-6 sm:p-12 md:p-16 text-white overflow-y-auto"
+            className="fixed inset-0 z-50 bg-[#040404]/98 md:bg-[#020202]/98 backdrop-blur-2xl flex flex-col justify-between p-4 sm:p-8 md:p-12 text-white overflow-y-auto"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -275,14 +277,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="absolute inset-0 pointer-events-none opacity-[0.05] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,#ffffff_0%,transparent_100%)]" />
 
             {/* OVERLAY HEADER LINE */}
-            <div className="flex justify-between items-center border-b border-white/5 pb-5 sm:pb-8 relative z-10">
+            <div className="flex justify-between items-center border-b border-white/5 pb-4 relative z-10">
               <div className="flex items-center gap-3">
-                <div className="bg-accent-red text-white w-9 h-9 rounded flex items-center justify-center font-black text-sm tracking-wide">
+                <div className="bg-accent-red text-white w-8 h-8 rounded flex items-center justify-center font-black text-xs tracking-wide">
                   JB
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-mono text-[10px] text-gray-500 uppercase tracking-widest">OFFICIAL ARCHIVE</span>
-                  <span className="font-sans font-black text-sm text-white tracking-wide uppercase leading-none">
+                  <span className="font-mono text-[9px] text-gray-500 uppercase tracking-widest">OFFICIAL ARCHIVE</span>
+                  <span className="font-sans font-black text-xs text-white tracking-wide uppercase leading-none">
                     Jaya Berkat <span className="text-accent-red">Mobil</span>
                   </span>
                 </div>
@@ -291,7 +293,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Close Button styled like architectural specs */}
               <button
                 onClick={() => setMenuOpen(false)}
-                className="bg-white/5 hover:bg-white text-white hover:text-black border border-white/10 px-4 py-2.5 rounded-lg text-[9px] font-mono tracking-[0.2em] uppercase font-bold transition-all duration-250 cursor-pointer flex items-center gap-2"
+                className="bg-white/5 hover:bg-white text-white hover:text-black border border-white/10 px-3 py-1.5 rounded text-[8px] sm:text-[9px] font-mono tracking-[0.2em] uppercase font-bold transition-all duration-250 cursor-pointer flex items-center gap-1.5"
               >
                 <span>CLOSE</span>
                 <X className="w-3.5 h-3.5" />
@@ -299,64 +301,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             {/* CORE BODY NAVIGATION */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 my-auto py-8 sm:py-12 relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 my-auto py-4 relative z-10 w-full">
               
-              {/* LEFT SIDE: Architectural Details & Telemetry Coordinates */}
-              <div className="lg:col-span-4 flex flex-col justify-between space-y-8 font-sans text-left border-l border-white/5 pl-4 lg:pl-6">
-                <div className="space-y-4">
-                  <h4 className="text-[10px] font-mono uppercase tracking-[0.25em] text-accent-red font-black">
-                     // LOKASI & REGISTRASI
-                  </h4>
-                  <p className="text-xs text-gray-400 font-sans leading-relaxed">
-                    Showroom kami di Surabaya selalu mengutamakan integritas dengan armada unit lengkap bersertifikat bebas banjir & tabrak.
-                  </p>
-                  
-                  {/* Visual CAD-styled blueprint schema info */}
-                  <div className="bg-[#0b0b0b] border border-white/5 p-3 rounded-md space-y-2 font-mono">
-                    <div className="flex justify-between text-[10px]">
-                      <span className="text-gray-500">CABANG 1:</span>
-                      <span className="text-gray-300 font-bold">WIYUNG, SURABAYA BARAT</span>
-                    </div>
-                    <div className="flex justify-between text-[10px]">
-                      <span className="text-gray-500">CABANG 2:</span>
-                      <span className="text-gray-300 font-bold">DTC WONOKROMO MALL</span>
-                    </div>
-                    <div className="flex justify-between text-[10px]">
-                      <span className="text-gray-500">WIB ZONE:</span>
-                      <span className="text-gray-300 font-bold">{currentTime} (SURABAYA)</span>
-                    </div>
-                    <div className="flex justify-between text-[10px]">
-                      <span className="text-gray-500">OPERATIONAL:</span>
-                      <span className="text-emerald-500 font-bold">OPEN 08:00 - 17:00</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3.5">
-                  <h4 className="text-[10px] font-mono uppercase tracking-[0.25em] text-gray-500 font-black">
-                     // TEMA KANVAS
-                  </h4>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setTheme('dark')}
-                      className={`flex-1 flex items-center justify-center gap-1.5 border py-2.5 rounded text-[9px] font-mono uppercase tracking-widest font-black cursor-pointer transition-all ${theme === 'dark' ? 'bg-white text-black border-white' : 'bg-transparent text-gray-400 border-white/10 hover:text-white'}`}
-                    >
-                      <Moon className="w-3 h-3" />
-                      Slate Dark
-                    </button>
-                    <button
-                      onClick={() => setTheme('light')}
-                      className={`flex-1 flex items-center justify-center gap-1.5 border py-2.5 rounded text-[9px] font-mono uppercase tracking-widest font-black cursor-pointer transition-all ${theme === 'light' ? 'bg-white text-black border-white' : 'bg-transparent text-gray-400 border-white/10 hover:text-white'}`}
-                    >
-                      <Sun className="w-3 h-3" />
-                      Studio Light
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* RIGHT SIDE: Giant Vertical Index Menu */}
-              <div className="lg:col-span-8 flex flex-col justify-center text-left">
+              {/* PRIMARY CONTENT (RIGHT SIDE IN LARGER VIEWS): Giant Vertical Index Menu - PLACED FIRST ON MOBILE */}
+              <div className="lg:col-span-8 order-1 lg:order-2 flex flex-col justify-center text-left">
                 <nav className="space-y-4 md:space-y-5">
                   {menuItems.map((item, index) => {
                     const isActive = activeTab === item.id;
@@ -365,32 +313,33 @@ export const Navbar: React.FC<NavbarProps> = ({
                     return (
                       <motion.div
                         key={item.id}
-                        initial={{ opacity: 0, x: 25 }}
+                        initial={{ opacity: 0, x: 15 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
+                        transition={{ delay: index * 0.04 }}
                         className="group relative"
                       >
                         <button
                           onClick={() => handleMenuClick(item.id)}
-                          className="w-full text-left flex flex-col md:flex-row md:items-baseline gap-2 md:gap-4 py-2 border-b border-white/5 transition-all outline-none cursor-pointer"
+                          className="w-full text-left flex flex-row items-baseline justify-between py-1.5 border-b border-white/5 hover:border-white/15 transition-all outline-none cursor-pointer"
                         >
-                          <span className="font-mono text-[11px] text-accent-red font-black tracking-widest">
-                            {numString} //
-                          </span>
-                          
-                          <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4">
-                            <span className={`font-sans font-black text-2xl sm:text-4xl uppercase tracking-tight transition-colors duration-200 group-hover:text-accent-red ${isActive ? 'text-white' : 'text-gray-400'}`}>
+                          <div className="flex items-baseline gap-3">
+                            <span className="font-mono text-[10px] text-accent-red font-bold tracking-widest">
+                              {numString} //
+                            </span>
+                            
+                            <span className={`font-sans font-black text-lg xs:text-xl sm:text-2xl md:text-3xl uppercase tracking-tight transition-colors duration-200 group-hover:text-accent-red ${isActive ? 'text-white' : 'text-gray-400'}`}>
                               {item.label}
                             </span>
-                            <span className="font-mono text-[9px] text-gray-500 uppercase tracking-[0.2em] hidden sm:inline opacity-60 group-hover:opacity-100 transition-opacity">
-                              {item.tag}
-                            </span>
                           </div>
+
+                          <span className="font-mono text-[8px] sm:text-[9px] text-gray-500 uppercase tracking-[0.15em] opacity-80 group-hover:opacity-100 transition-opacity">
+                            {item.tag}
+                          </span>
                         </button>
                         
-                        {/* Sub description revealing on hovered focus */}
-                        <div className="max-h-0 overflow-hidden group-hover:max-h-12 transition-all duration-300">
-                          <p className="text-[11px] font-sans text-gray-400 font-normal py-1 max-w-xl pl-0 md:pl-12">
+                        {/* Sub description is statically positioned to avoid annoying layout jumping */}
+                        <div className="mt-1">
+                          <p className="text-[10px] sm:text-[11px] font-sans text-gray-500 group-hover:text-gray-400 transition-colors font-normal pl-6 sm:pl-8 truncate max-w-xl">
                             {item.desc}
                           </p>
                         </div>
@@ -400,15 +349,69 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </nav>
               </div>
 
+              {/* SECONDARY INFO (LEFT SIDE): Architectural Details & Telemetry Coordinates */}
+              <div className="lg:col-span-4 order-2 lg:order-1 flex flex-col justify-between space-y-6 lg:space-y-8 font-sans text-left border-t lg:border-t-0 lg:border-l border-white/5 pt-6 lg:pt-0 pl-0 lg:pl-6">
+                <div className="space-y-3">
+                  <h4 className="text-[9px] font-mono uppercase tracking-[0.25em] text-accent-red font-black">
+                     // LOKASI & REGISTRASI
+                  </h4>
+                  <p className="text-[11px] text-gray-400 font-sans leading-relaxed">
+                    Showroom kami di Surabaya selalu mengutamakan integritas dengan armada unit lengkap bersertifikat bebas banjir & tabrak.
+                  </p>
+                  
+                  {/* Visual CAD-styled blueprint schema info */}
+                  <div className="bg-[#0b0b0b] border border-white/5 p-2.5 rounded space-y-1.5 font-mono">
+                    <div className="flex justify-between text-[9px]">
+                      <span className="text-gray-500">CABANG 1:</span>
+                      <span className="text-gray-300 font-bold">WIYUNG, SURABAYA BARAT</span>
+                    </div>
+                    <div className="flex justify-between text-[9px]">
+                      <span className="text-gray-500">CABANG 2:</span>
+                      <span className="text-gray-300 font-bold">DTC WONOKROMO MALL</span>
+                    </div>
+                    <div className="flex justify-between text-[9px]">
+                      <span className="text-gray-500">WIB ZONE:</span>
+                      <span className="text-gray-300 font-bold">{currentTime} (SURABAYA)</span>
+                    </div>
+                    <div className="flex justify-between text-[9px]">
+                      <span className="text-gray-500">OPERATIONAL:</span>
+                      <span className="text-emerald-500 font-bold">OPEN 08:00 - 17:00</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2.5">
+                  <h4 className="text-[9px] font-mono uppercase tracking-[0.25em] text-gray-500 font-black">
+                     // TEMA KANVAS
+                  </h4>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setTheme('dark')}
+                      className={`flex-1 flex items-center justify-center gap-1.5 border py-2 rounded text-[8px] sm:text-[9px] font-mono uppercase tracking-widest font-black cursor-pointer transition-all ${theme === 'dark' ? 'bg-white text-black border-white' : 'bg-transparent text-gray-400 border-white/10 hover:text-white'}`}
+                    >
+                      <Moon className="w-3 h-3" />
+                      Slate Dark
+                    </button>
+                    <button
+                      onClick={() => setTheme('light')}
+                      className={`flex-1 flex items-center justify-center gap-1.5 border py-2 rounded text-[8px] sm:text-[9px] font-mono uppercase tracking-widest font-black cursor-pointer transition-all ${theme === 'light' ? 'bg-white text-black border-white' : 'bg-transparent text-gray-400 border-white/10 hover:text-white'}`}
+                    >
+                      <Sun className="w-3 h-3" />
+                      Studio Light
+                    </button>
+                  </div>
+                </div>
+              </div>
+
             </div>
 
             {/* OVERLAY FOOTER COORDS */}
-            <div className="flex flex-col sm:flex-row justify-between items-center border-t border-white/5 pt-5 sm:pt-8 text-[10px] font-mono text-gray-500 relative z-10 gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-center border-t border-white/5 pt-4 text-[9px] font-mono text-gray-500 relative z-10 gap-3">
               <div>
-                <span>© {new Date().getFullYear()} JAYA BERKAT MOBIL SURABAYA • DETAILED BLUEPRINT NAVIGATION</span>
+                <span>© {new Date().getFullYear()} JAYA BERKAT MOBIL SURABAYA</span>
               </div>
-              <div className="flex items-center gap-6">
-                <span>COORD: S 7.2575° / E 112.7521°</span>
+              <div className="flex items-center gap-4">
+                <span className="hidden sm:inline">COORD: S 7.2575° / E 112.7521°</span>
                 <span className="text-gray-400 hover:text-white transition-colors cursor-pointer" onClick={() => setCmsOpen(!cmsOpen)}>
                   [ {cmsOpen ? 'MATIKAN' : 'AKTIFKAN'} OFFICE ADMIN MODE ]
                 </span>

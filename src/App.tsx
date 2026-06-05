@@ -76,6 +76,7 @@ export default function App() {
               setActiveTab={setActiveTab} 
               cmsOpen={cmsOpen}
               setCmsOpen={setCmsOpen}
+              theme={theme}
             />
           </main>
         </div>

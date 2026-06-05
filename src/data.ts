@@ -341,6 +341,63 @@ export const INITIAL_CMS_DATA: CMSData = {
       quote: "Beli unit komersial buat travel keluarga. Kondisi istimewa, kaki-kaki empuk, sasis kokoh bebas karat besi. JBM juara unit siap tempurnya!",
       rating: 5
     }
+  ],
+  advisors: [
+    { 
+      id: "advisor-1",
+      name: "Andik JBM", 
+      phone: "6285785649369", 
+      area: "Showroom DTC", 
+      badge: "Sales Advisor",
+      specialty: "SUV & MPV Keluarga",
+      rating: "4.9",
+      sold: "150+ Unit",
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&h=400&q=80"
+    },
+    { 
+      id: "advisor-2",
+      name: "Jevry JBM", 
+      phone: "6281330253797", 
+      area: "Showroom Wiyung", 
+      badge: "Manager",
+      specialty: "Konsultan Trade-In",
+      rating: "5.0",
+      sold: "320+ Unit",
+      avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&h=400&q=80"
+    },
+    { 
+      id: "advisor-3",
+      name: "Yoan JBM", 
+      phone: "6281808383522", 
+      area: "Showroom Wiyung", 
+      badge: "Senior Advisor",
+      specialty: "Mobil Eropa & Hobi",
+      rating: "4.9",
+      sold: "120+ Unit",
+      avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&h=400&q=80"
+    },
+    { 
+      id: "advisor-4",
+      name: "Ricky JBM", 
+      phone: "6281380553331", 
+      area: "Showroom DTC", 
+      badge: "Sales Specialist",
+      specialty: "Solusi Kredit Ringan",
+      rating: "4.8",
+      sold: "180+ Unit",
+      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&h=400&q=80"
+    },
+    { 
+      id: "advisor-5",
+      name: "Fatchul JBM", 
+      phone: "6281270605758", 
+      area: "Showroom Wiyung", 
+      badge: "Sales Advisor",
+      specialty: "City Car & Hatchback",
+      rating: "4.9",
+      sold: "100+ Unit",
+      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&h=400&q=80"
+    }
   ]
 };
 
@@ -352,6 +409,9 @@ export function getStoredCMSData(): CMSData {
       if (parsed.hero && parsed.cars && parsed.stats) {
         if (!parsed.hallOfFame) {
           parsed.hallOfFame = INITIAL_CMS_DATA.hallOfFame;
+        }
+        if (!parsed.advisors) {
+          parsed.advisors = INITIAL_CMS_DATA.advisors;
         }
         return parsed;
       }
