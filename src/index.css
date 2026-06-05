@@ -1,0 +1,232 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght=400;600;700;800;900&family=DM+Sans:ital,wght=0,300;0,400;0,500;0,700;1,300&display=swap');
+@import "tailwindcss";
+
+:root {
+  --navy-deep: #0f172a;
+  --navy-card: #1e293b;
+  --navy-light: #334155;
+  
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+}
+
+body.light-theme {
+  --navy-deep: #f8fafc;
+  --navy-card: #ffffff;
+  --navy-light: #e2e8f0;
+
+  --slate-50: #0f172a;
+  --slate-100: #1e293b;
+  --slate-200: #334155;
+  --slate-300: #475569;
+  --slate-400: #64748b;
+  --slate-500: #94a3b8;
+
+  /* Redefine Tailwind's theme variables directly to update them for all children in this theme */
+  --color-slate-50: #0f172a;
+  --color-slate-100: #1e293b;
+  --color-slate-200: #334155;
+  --color-slate-300: #475569;
+  --color-slate-400: #64748b;
+  --color-slate-500: #94a3b8;
+}
+
+@theme {
+  /* Pair Syne as a high-character display headline font and DM Sans for utility copy */
+  --font-serif: "Syne", "Playfair Display", Georgia, serif;
+  --font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
+
+  /* Theme Configuration matching Design Spec */
+  --color-navy-deep: var(--navy-deep);
+  --color-navy-card: var(--navy-card);
+  --color-navy-light: var(--navy-light);
+  --color-accent-red: #ef4444;
+  --color-accent-red-hover: #dc2626;
+  --color-gold-accent: #f0c040;
+
+  /* Map slates to CSS variables */
+  --color-slate-50: var(--slate-50);
+  --color-slate-100: var(--slate-100);
+  --color-slate-200: var(--slate-200);
+  --color-slate-300: var(--slate-300);
+  --color-slate-400: var(--slate-400);
+  --color-slate-500: var(--slate-500);
+
+  /* Custom animations for fluid layout states */
+  --animate-fadeIn: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-marquee: marquee 65s linear infinite;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-33.333333%, 0, 0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Custom slick dark scrollbar for the control panel scrollable segments */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Base Body Tuning & Smooth Theme Animations */
+body,
+.bg-navy-deep,
+.bg-navy-card,
+.bg-navy-light,
+.border-navy-light,
+.text-slate-100,
+.text-slate-200,
+.text-slate-350,
+.text-slate-300,
+.text-slate-400,
+.text-slate-500,
+.text-white {
+  transition: background-color 0.2s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+body {
+  background-color: var(--navy-deep);
+  color: var(--slate-100);
+  font-family: var(--font-sans);
+}
+
+/* Light theme overrides to ensure absolute contrast on changed elements */
+body.light-theme {
+  background-color: #f8fafc !important;
+  color: #1e293b !important;
+}
+
+body.light-theme .bg-navy-deep,
+body.light-theme [class*="bg-navy-deep"] {
+  background-color: #f8fafc !important;
+}
+
+body.light-theme .bg-navy-card,
+body.light-theme [class*="bg-navy-card"] {
+  background-color: #ffffff !important;
+}
+
+body.light-theme header,
+body.light-theme .bg-navy-card\/90,
+body.light-theme [class*="bg-navy-card/90"] {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+}
+
+body.light-theme .bg-navy-light,
+body.light-theme .hover\:bg-navy-light\/50:hover,
+body.light-theme .hover\:bg-navy-light:hover,
+body.light-theme [class*="bg-navy-light"] {
+  background-color: #f1f5f9 !important;
+}
+
+body.light-theme .border-navy-light,
+body.light-theme [class*="border-navy-light"] {
+  border-color: #e2e8f0 !important;
+}
+
+/* Ensure text colors look flawless in light theme */
+body.light-theme .text-white:not([class*="bg-accent"]):not([class*="bg-red"]):not([class*="bg-red"] *):not([class*="bg-accent"] *):not(button *):not(.bg-accent-red *):not(.bg-accent-red):not([class*="text-accent-red"]) {
+  color: #0f172a !important;
+}
+
+body.light-theme .text-slate-100,
+body.light-theme [class*="text-slate-100"] {
+  color: #1e293b !important;
+}
+
+body.light-theme .text-slate-200,
+body.light-theme [class*="text-slate-200"] {
+  color: #334155 !important;
+}
+
+body.light-theme .text-slate-300,
+body.light-theme [class*="text-slate-300"] {
+  color: #475569 !important;
+}
+
+body.light-theme .text-slate-350,
+body.light-theme [class*="text-slate-350"] {
+  color: #4b5563 !important;
+}
+
+body.light-theme .text-slate-400,
+body.light-theme [class*="text-slate-400"] {
+  color: #4b5563 !important;
+}
+
+body.light-theme .text-slate-500,
+body.light-theme [class*="text-slate-500"] {
+  color: #6b7280 !important;
+}
+
+body.light-theme .text-gray-300,
+body.light-theme [class*="text-gray-300"] {
+  color: #374151 !important;
+}
+
+body.light-theme .text-gray-400,
+body.light-theme [class*="text-gray-400"] {
+  color: #4b5563 !important;
+}
+
+body.light-theme .text-gray-500,
+body.light-theme [class*="text-gray-500"] {
+  color: #6b7280 !important;
+}
+
+/* Ensure form controls and select options have high readability in light theme */
+body.light-theme select,
+body.light-theme select option,
+body.light-theme input,
+body.light-theme textarea {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+  border-color: #cbd5e1 !important;
+}
+
+body.light-theme input::placeholder,
+body.light-theme textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Ensure shadow definitions look clean on light background */
+body.light-theme .shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+}
+body.light-theme .shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+}
+
+/* Custom CMS tag according to Design HTML */
+.cms-tag {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}

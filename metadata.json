@@ -1,0 +1,6 @@
+{
+  "name": "Jaya Berkat Mobil",
+  "description": "High-end used car dealer website with intuitive CMS back-office to customize all front-end content dynamically.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
