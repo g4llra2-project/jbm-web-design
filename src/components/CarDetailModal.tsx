@@ -63,6 +63,15 @@ const DEFAULT_GALLERY = [
 export const CarDetailModal: React.FC<CarDetailModalProps> = ({ car, onClose }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
+  React.useEffect(() => {
+    if (!car) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [car]);
+
   if (!car) return null;
 
   // Prepare images for the gallery
@@ -114,7 +123,7 @@ Apakah unit ini masih tersedia di salah satu cabang Surabaya? Terima kasih.`;
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto bg-black/95 backdrop-blur-md">
+      <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-3 sm:p-6 overflow-y-auto bg-black/95 backdrop-blur-md">
         
         {/* Animated background overlay */}
         <motion.div 
@@ -131,7 +140,7 @@ Apakah unit ini masih tersedia di salah satu cabang Surabaya? Terima kasih.`;
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ cubicBezier: [0.16, 1, 0.3, 1], duration: 0.4 }}
-          className="relative w-full max-w-5xl bg-[#0a0d14] rounded-lg border border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden z-20 mx-auto"
+          className="relative w-full max-w-5xl bg-[#0a0d14] rounded-lg border border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden z-20 mx-auto my-auto"
         >
           {/* Header Bar */}
           <div className="flex justify-between items-center px-4 sm:px-6 py-4 border-b border-white/5 bg-black/40">
