@@ -60,6 +60,8 @@ export interface BlogArticle {
   content: string;
   isFeatured?: boolean;
   images?: string[];
+  seoTitle?: string;
+  seoDescription?: string;
 }
 
 export interface GalleryItem {
@@ -110,6 +112,20 @@ export interface ShowroomConfig {
   operatingHours: string;
 }
 
+export interface SEOTag {
+  title: string;
+  description: string;
+}
+
+export interface SEODatabase {
+  beranda: SEOTag;
+  'mobil-dijual': SEOTag;
+  profil: SEOTag;
+  'hall-of-fame': SEOTag;
+  'promo-artikel': SEOTag;
+  kontak: SEOTag;
+}
+
 export interface CMSData {
   hero: HeroData;
   stats: TrustStat[];
@@ -122,4 +138,5 @@ export interface CMSData {
   showroom: ShowroomConfig;
   hallOfFame?: HallOfFameItem[];
   advisors?: AdvisorItem[];
+  seo?: SEODatabase;
 }

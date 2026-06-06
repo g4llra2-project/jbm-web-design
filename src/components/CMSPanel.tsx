@@ -3,7 +3,7 @@ import {
   Save, Car, Plus, Trash2, Edit, Check, Settings, 
   MessageSquare, FileText, Info, CheckSquare, X 
 } from 'lucide-react';
-import { CMSData, Car as CarType, Testimonial, BlogArticle, HallOfFameItem } from '../types';
+import { CMSData, Car as CarType, Testimonial, BlogArticle, HallOfFameItem, SEODatabase } from '../types';
 import { ImageUploader } from './ImageUploader';
 
 interface CMSPanelProps {
@@ -13,7 +13,7 @@ interface CMSPanelProps {
 }
 
 export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'hero' | 'stok' | 'testimoni' | 'artikel' | 'kontak' | 'sales' | 'hof'>('hero');
+  const [activeSubTab, setActiveSubTab] = useState<'hero' | 'stok' | 'testimoni' | 'artikel' | 'kontak' | 'sales' | 'hof' | 'seo'>('hero');
   const [editingCarId, setEditingCarId] = useState<string | null>(null);
 
   // Car Form Local States
@@ -351,7 +351,8 @@ export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }
           { id: 'hof', label: '🏆 Hall of Fame' },
           { id: 'artikel', label: '📰 Artikel' },
           { id: 'sales', label: '👤 Sales Team' },
-          { id: 'kontak', label: '📍 Alamat' }
+          { id: 'kontak', label: '📍 Alamat' },
+          { id: 'seo', label: '🔍 Panel SEO' }
         ].map(tab => (
           <button
             key={tab.id}
@@ -365,8 +366,6 @@ export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }
             <span>{tab.label}</span>
           </button>
         ))}
-        {/* Empty placeholder to complete the 8-cell layout (4x2) */}
-        <div className="bg-[#0e172a] border-b border-transparent" />
       </div>
 
       {/* CMS content block - scrollable */}
@@ -1046,6 +1045,49 @@ export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }
                       />
                     </div>
 
+                    {/* SEO Meta Tags for Article */}
+                    <div className="bg-[#121c33]/40 border border-white/5 p-3 rounded-lg space-y-2 mt-2">
+                      <div className="flex items-center gap-1">
+                        <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-[#D4A017]">
+                          🔍 SEO Meta Tags (Per-Artikel)
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <label className="block text-[8px] font-mono text-gray-400 uppercase">Meta Title Artikel</label>
+                        <input
+                          type="text"
+                          value={art.seoTitle || ''}
+                          onChange={(e) => updateArticle(art.id, 'seoTitle', e.target.value)}
+                          placeholder="Kosongkan untuk memakai Judul Utama sebagai default meta title"
+                          className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-[#D4A017]"
+                        />
+                        <div className="flex justify-between font-mono text-[7px] text-gray-500">
+                          <span>Panjang rekomendasi: 50-65</span>
+                          <span className={(art.seoTitle || '').length > 65 ? 'text-amber-500' : 'text-slate-400'}>
+                            {(art.seoTitle || '').length} karakter
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="block text-[8px] font-mono text-gray-400 uppercase">Meta Description Artikel</label>
+                        <textarea
+                          rows={2}
+                          value={art.seoDescription || ''}
+                          onChange={(e) => updateArticle(art.id, 'seoDescription', e.target.value)}
+                          placeholder="Kosongkan untuk memakai ringkasan konten default"
+                          className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-[#D4A017] resize-none"
+                        />
+                        <div className="flex justify-between font-mono text-[7px] text-gray-500">
+                          <span>Panjang rekomendasi: 150-165</span>
+                          <span className={(art.seoDescription || '').length > 165 ? 'text-amber-500' : 'text-slate-400'}>
+                            {(art.seoDescription || '').length} karakter
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="space-y-1.5 pt-1.5 border-t border-white/5">
                       <label className="block text-[8.5px] uppercase tracking-wider text-gray-400">
                         Foto Galeri Artikel (Max 3)
@@ -1299,6 +1341,94 @@ export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── SUB TAB: SEO ── */}
+        {activeSubTab === 'seo' && (
+          <div className="space-y-6 animate-fadeIn">
+            <div>
+              <h3 className="text-xs font-mono uppercase tracking-wider text-[#D4A017] border-b border-white/5 pb-2">
+                Pengaturan Meta SEO (Search Engine)
+              </h3>
+              <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">
+                Konfigurasi Meta Title dan Meta Description untuk masing-masing halaman aktif agar situs JBM Surabaya terindeks maksimal di Google dan ramah SEO.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {[
+                { id: 'beranda', label: 'Beranda (Halaman Utama)' },
+                { id: 'mobil-dijual', label: 'Mobil Dijual (Katalog)' },
+                { id: 'profil', label: 'Profil JBM (Tentang Kami)' },
+                { id: 'hall-of-fame', label: 'Hall of Fame (3D Blueprint)' },
+                { id: 'promo-artikel', label: 'Promo & Artikel' },
+                { id: 'kontak', label: 'Kontak (Lokasi & Sales)' }
+              ].map(seoPage => {
+                const pageId = seoPage.id as keyof SEODatabase;
+                const seoData = (cmsData.seo && cmsData.seo[pageId]) || { title: '', description: '' };
+
+                return (
+                  <div key={seoPage.id} className="bg-[#121c33]/55 border border-white/5 rounded-xl p-4 space-y-3">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-accent-red block">
+                      // {seoPage.label}
+                    </span>
+
+                    <div className="space-y-1">
+                      <label className="block text-[9px] font-mono text-gray-400 uppercase">Meta Title</label>
+                      <input
+                        type="text"
+                        value={seoData.title}
+                        onChange={(e) => {
+                          const updatedSeo = {
+                            ...(cmsData.seo || {}),
+                            [pageId]: {
+                              ...seoData,
+                              title: e.target.value
+                            }
+                          } as SEODatabase;
+                          onChange({ ...cmsData, seo: updatedSeo });
+                        }}
+                        placeholder="Masukkan Meta Title"
+                        className="w-full bg-[#080d19]/80 border border-white/10 rounded-lg px-3 py-2 text-[11px] text-slate-150 focus:border-[#D4A017] outline-none transition-all font-sans"
+                      />
+                      <div className="flex justify-between font-mono text-[8px] text-gray-500">
+                        <span>Panjang optimal: 50-65</span>
+                        <span className={seoData.title.length > 65 ? 'text-amber-500' : 'text-slate-400'}>
+                          {seoData.title.length} karakter
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-[9px] font-mono text-gray-400 uppercase">Meta Description</label>
+                      <textarea
+                        value={seoData.description}
+                        onChange={(e) => {
+                          const updatedSeo = {
+                            ...(cmsData.seo || {}),
+                            [pageId]: {
+                              ...seoData,
+                              description: e.target.value
+                            }
+                          } as SEODatabase;
+                          onChange({ ...cmsData, seo: updatedSeo });
+                        }}
+                        placeholder="Masukkan Meta Description"
+                        rows={3}
+                        className="w-full bg-[#080d19]/80 border border-white/10 rounded-lg px-3 py-2 text-[11px] text-slate-150 focus:border-[#D4A017] outline-none transition-all font-sans resize-none"
+                      />
+                      <div className="flex justify-between font-mono text-[8px] text-gray-500">
+                        <span>Panjang optimal: 150-165</span>
+                        <span className={seoData.description.length > 165 ? 'text-amber-500' : 'text-slate-400'}>
+                          {seoData.description.length} karakter
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

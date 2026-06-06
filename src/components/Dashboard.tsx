@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   CheckCircle2, ArrowRight, Phone, MessageCircle, MapPin, 
   Search, Shield, Star, Award, Users, Calendar, 
   Play, ExternalLink, Mail, UserCheck, ChevronRight, X,
-  Clock, Copy, Map, Compass
+  Clock, Copy, Map, Compass, Heart, RefreshCw, SlidersHorizontal, Sliders, Sparkles
 } from 'lucide-react';
 import { CMSData, Car } from '../types';
 import { CarIllustration } from './CarIllustration';
@@ -36,6 +36,8 @@ interface DashboardProps {
   cmsOpen?: boolean;
   setCmsOpen?: (open: boolean) => void;
   theme?: 'dark' | 'light';
+  darkVariant?: 'slate' | 'abyss' | 'obsidian';
+  setDarkVariant?: (variant: 'slate' | 'abyss' | 'obsidian') => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ 
@@ -44,13 +46,39 @@ export const Dashboard: React.FC<DashboardProps> = ({
   setActiveTab,
   cmsOpen,
   setCmsOpen,
-  theme = 'dark'
+  theme = 'dark',
+  darkVariant = 'slate',
+  setDarkVariant
 }) => {
   // Filters for Catalog
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBrand, setSelectedBrand] = useState('All');
   const [selectedTrans, setSelectedTrans] = useState('All');
   const [priceRange, setPriceRange] = useState<number>(500000000); // Max budget filter
+  const [selectedBodyType, setSelectedBodyType] = useState('All');
+  const [onlyAvailable, setOnlyAvailable] = useState(false);
+  const [sortBy, setSortBy] = useState<'default' | 'price-low' | 'price-high' | 'year-new' | 'mileage-low'>('default');
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('jbm_favorites');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const toggleFavorite = (carId: string) => {
+    setFavorites(prev => {
+      const isAlready = prev.includes(carId);
+      const updated = isAlready ? prev.filter(id => id !== carId) : [...prev, carId];
+      try {
+        localStorage.setItem('jbm_favorites', JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
+  };
 
   // Filter for Gallery
   const [galleryCategory, setGalleryCategory] = useState<string>('All');
@@ -58,6 +86,43 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   // Active blog detail model
   const [activeArticleId, setActiveArticleId] = useState<string | null>(null);
+
+  // Dynamic article SEO helper hook
+  useEffect(() => {
+    if (activeArticleId) {
+      const art = cmsData.articles.find(a => a.id === activeArticleId);
+      if (art) {
+        const originalTitle = document.title;
+        
+        // Locate or build meta description tag
+        let metaDescription = document.querySelector('meta[name="description"]');
+        const originalDescription = metaDescription ? metaDescription.getAttribute('content') : '';
+
+        // Prioritize article custom SEO values, with smart fallback to standard article fields
+        const newTitle = art.seoTitle?.trim() || `${art.title} | JBM Surabaya Blog`;
+        const newDescription = art.seoDescription?.trim() || 
+          (art.content ? art.content.slice(0, 155).replace(/[#*_]/g, '') + '...' : '');
+
+        document.title = newTitle;
+        if (metaDescription) {
+          metaDescription.setAttribute('content', newDescription);
+        } else {
+          metaDescription = document.createElement('meta');
+          metaDescription.setAttribute('name', 'description');
+          metaDescription.setAttribute('content', newDescription);
+          document.head.appendChild(metaDescription);
+        }
+
+        // Return cleanup to restore original page tags on modal dismiss
+        return () => {
+          document.title = originalTitle;
+          if (metaDescription && originalDescription) {
+            metaDescription.setAttribute('content', originalDescription);
+          }
+        };
+      }
+    }
+  }, [activeArticleId, cmsData.articles]);
 
   // Selected car for spec detail card/modal
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
@@ -93,15 +158,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
   // Get dynamic unique brands loaded in stock
   const availableBrands = ['All', ...Array.from(new Set(cmsData.cars.map(c => c.brand)))];
 
+  const getBodyType = (car: Car) => {
+    const name = car.name.toLowerCase();
+    if (name.includes('brio') || name.includes('ayla') || name.includes('jazz')) return 'Hatchback';
+    if (name.includes('fortuner') || name.includes('pajero') || name.includes('mux') || name.includes('hrv') || name.includes('xpander')) return 'SUV';
+    if (name.includes('innova') || name.includes('avanza') || name.includes('ertiga') || name.includes('hiace') || name.includes('veloz') || name.includes('vellfire')) return 'MPV/Van';
+    return 'Lainnya';
+  };
+
   // Filter stock mobilization
-  const filteredCars = cmsData.cars.filter(car => {
-    const matchesSearch = car.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          car.brand.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesBrand = selectedBrand === 'All' || car.brand === selectedBrand;
-    const matchesTrans = selectedTrans === 'All' || car.transmission === selectedTrans;
-    const matchesPrice = car.price <= priceRange;
-    return matchesSearch && matchesBrand && matchesTrans && matchesPrice;
-  });
+  const filteredCars = cmsData.cars
+    .filter(car => {
+      const matchesSearch = car.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            car.brand.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesBrand = selectedBrand === 'All' || car.brand === selectedBrand;
+      const matchesTrans = selectedTrans === 'All' || car.transmission === selectedTrans;
+      const matchesPrice = car.price <= priceRange;
+      const matchesAvailable = !onlyAvailable || !car.isSold;
+      const matchesBodyType = selectedBodyType === 'All' || getBodyType(car) === selectedBodyType;
+      return matchesSearch && matchesBrand && matchesTrans && matchesPrice && matchesAvailable && matchesBodyType;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'price-low') return a.price - b.price;
+      if (sortBy === 'price-high') return b.price - a.price;
+      if (sortBy === 'year-new') return b.year - a.year;
+      if (sortBy === 'mileage-low') return a.mileage - b.mileage;
+      return 0; // default
+    });
 
   // Highlight car based on ID from CMS
   const heroHighlightCar = cmsData.cars.find(c => c.id === cmsData.hero.highlightUnitId) || cmsData.cars[0];
@@ -304,179 +387,468 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* SECTION: MOBIL DIJUAL (CAR CATALOG) */}
       {/* ──────────────────────────────────────────────────────────────────────── */}
       {activeTab === 'mobil-dijual' && (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 space-y-10 animate-fadeIn min-h-screen font-sans">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 space-y-8 animate-fadeIn min-h-screen font-sans">
           
           {/* Header */}
-          <div className="text-left space-y-2">
+          <div className="text-left space-y-2 pb-6 border-b border-solid border-slate-100 dark:border-white/5">
             <span className="text-[11px] font-mono text-accent-red uppercase tracking-[0.2em] font-bold block">
               KATALOG KHUSUS JBM SURABAYA
             </span>
-            <h1 className="font-sans font-black text-3xl sm:text-4xl text-slate-100 uppercase tracking-tight">
+            <h1 className={`font-sans font-black text-3xl sm:text-4xl uppercase tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}>
               Cari Mobil Bekas Berkualitas
             </h1>
-            <p className="text-slate-400 text-xs sm:text-sm max-w-xl">
-              Gunakan filter merek, harga, dan transmisi untuk mempermudah pencarian mobil impian keluarga Anda. Semua unit telah bersertifikasi.
+            <p className={`text-xs sm:text-sm max-w-xl ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
+              Sajian unit showroom dengan standardisasi ketat. Nikmati grid interaktif terinspirasi digital rental dashboard premium JBM.
             </p>
           </div>
 
-          {/* Filtering Widgets Panel */}
-          <div className="bg-navy-card border border-navy-light rounded-lg p-5 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          {/* Main Content Workspace Grid - Column Span Split */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
-            {/* Search input - 3 col */}
-            <div className="lg:col-span-4 relative">
-              <label className="block text-[9px] uppercase tracking-wider text-slate-400 font-mono mb-1">Cari Nama Mobil</label>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Contoh: Innova, Avanza, Toyota..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-navy-deep border border-navy-light rounded pl-9 pr-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:border-accent-red outline-none transition-colors"
-                />
-                <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+            {/* LEFT SIDEBAR FILTERS (replicates original illustration sidebar) */}
+            <div className={`lg:col-span-3 lg:sticky lg:top-24 rounded-[32px] border p-6 space-y-6 transition-all duration-300
+              ${theme === 'light'
+                ? 'bg-white border-slate-200/80 shadow-md shadow-slate-200/30'
+                : 'bg-[#111827] border-white/5 shadow-2xl shadow-black/80'
+              }`}
+            >
+              {/* Filter By title row */}
+              <div className="flex items-center justify-between pb-3 border-b border-solid border-slate-105 dark:border-white/5">
+                <div className="flex items-center gap-2">
+                  <SlidersHorizontal className="w-4 h-4 text-accent-red" />
+                  <span className={`text-[11px] font-mono font-bold uppercase tracking-wider ${theme === 'light' ? 'text-slate-900' : 'text-slate-200'}`}>
+                    Filter by
+                  </span>
+                </div>
+                {(searchQuery || selectedBrand !== 'All' || selectedTrans !== 'All' || priceRange !== 500000000 || selectedBodyType !== 'All' || onlyAvailable) && (
+                  <button 
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedBrand('All');
+                      setSelectedTrans('All');
+                      setPriceRange(500000000);
+                      setSelectedBodyType('All');
+                      setOnlyAvailable(false);
+                      setSortBy('default');
+                    }}
+                    className="text-[10px] font-mono uppercase text-accent-red hover:underline font-bold flex items-center gap-1 cursor-pointer bg-transparent border-none p-0"
+                  >
+                    <RefreshCw className="w-2.5 h-2.5" /> Clear All
+                  </button>
+                )}
               </div>
-            </div>
 
-            {/* Brand Category Filter Pills - 3 col */}
-            <div className="lg:col-span-3">
-              <label className="block text-[9px] uppercase tracking-wider text-slate-400 font-mono mb-1">Merk Mobil</label>
-              <select
-                value={selectedBrand}
-                onChange={(e) => setSelectedBrand(e.target.value)}
-                className="w-full bg-navy-deep border border-navy-light rounded px-3 py-2 text-xs text-slate-100 focus:border-accent-red outline-none select-none transition-colors"
-              >
-                {availableBrands.map((brand) => (
-                  <option key={brand} value={brand}>
-                    {brand === 'All' ? 'Semua Merk' : brand}
-                  </option>
-                ))}
-              </select>
-            </div>
+              {/* SEARCH TEXT */}
+              <div className="space-y-1.5">
+                <label className={`block text-[9px] font-mono uppercase tracking-widest ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Nama Mobil / Merk
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Innova, Brio, Jazz..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={`w-full rounded-2xl pl-10 pr-3.5 py-2.5 text-xs outline-none transition-all border
+                      ${theme === 'light'
+                        ? 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400 focus:bg-white focus:border-accent-red'
+                        : 'bg-[#0f1524] border-white/5 text-slate-100 placeholder-slate-500 focus:border-accent-red'
+                      }`}
+                  />
+                  <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-500" />
+                </div>
+              </div>
 
-            {/* Transmission filter - 2 col */}
-            <div className="lg:col-span-2">
-              <label className="block text-[9px] uppercase tracking-wider text-slate-400 font-mono mb-1">Transmisi</label>
-              <select
-                value={selectedTrans}
-                onChange={(e) => setSelectedTrans(e.target.value)}
-                className="w-full bg-navy-deep border border-navy-light rounded px-3 py-2 text-xs text-slate-100 focus:border-accent-red outline-none select-none transition-colors"
-              >
-                <option value="All">Semua Transmisi</option>
-                <option value="AT">AT (Matic)</option>
-                <option value="MT">MT (Manual)</option>
-              </select>
-            </div>
-
-            {/* Price slider range - 3 col */}
-            <div className="lg:col-span-3">
-              <div className="flex justify-between text-[10px] text-slate-400 font-mono mb-1">
-                <span>MAX BUDGET</span>
-                <span className="text-accent-red font-bold">
-                  {priceRange === 500000000 ? 'No Limit' : `Rp ${(priceRange / 1000000).toFixed(0)} Juta`}
+              {/* TOGGLE SWITCH: ONLY READY STOCKS */}
+              <div className="flex items-center justify-between pt-1">
+                <span className={`text-[9px] font-mono uppercase tracking-widest ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Unit Ready Stock
                 </span>
+                <button
+                  type="button"
+                  onClick={() => setOnlyAvailable(!onlyAvailable)}
+                  className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none
+                    ${onlyAvailable ? 'bg-accent-red' : (theme === 'light' ? 'bg-slate-200' : 'bg-slate-800')}`}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out
+                      ${onlyAvailable ? 'translate-x-5' : 'translate-x-0'}`}
+                  />
+                </button>
               </div>
-              <input
-                type="range"
-                min="100000000"
-                max="500000000"
-                step="10000000"
-                value={priceRange}
-                onChange={(e) => setPriceRange(Number(e.target.value))}
-                className="w-full h-1 bg-navy-deep rounded-lg appearance-none cursor-pointer accent-accent-red"
-              />
+
+              {/* PRICE HISTOGRAM BAR CHART REPRESENTATION */}
+              <div className="space-y-2 pt-2 border-t border-solid border-slate-150 dark:border-white/5">
+                <div className="flex justify-between text-[9px] font-mono">
+                  <span className={theme === 'light' ? 'text-slate-500' : 'text-slate-400'}>BUDGET MAKSIMAL</span>
+                  <span className="text-accent-red font-black">
+                    {priceRange === 500000000 ? 'TANPA BATAS' : `Rp ${(priceRange / 1000000).toFixed(0)} JUTA`}
+                  </span>
+                </div>
+
+                {/* VISUAL HISTOGRAM COPIED FROM DESIGN */}
+                <div className="flex items-end justify-between h-10 px-1 gap-[2.5px] pt-1 overflow-hidden">
+                  {[20, 28, 45, 68, 80, 72, 58, 41, 30, 48, 62, 50, 32, 18, 10, 5].map((hVal, idx) => {
+                    const priceThreshold = 100000000 + idx * 26600000;
+                    const isActive = priceThreshold <= priceRange;
+                    return (
+                      <div
+                        key={idx}
+                        style={{ height: `${hVal}%` }}
+                        className={`w-full rounded-t-[2px] transition-all duration-300
+                          ${isActive 
+                            ? 'bg-accent-red opacity-85' 
+                            : (theme === 'light' ? 'bg-slate-150 opacity-60' : 'bg-white/10 opacity-30')
+                          }`}
+                      />
+                    );
+                  })}
+                </div>
+
+                <input
+                  type="range"
+                  min="100000000"
+                  max="500000000"
+                  step="10000000"
+                  value={priceRange}
+                  onChange={(e) => setPriceRange(Number(e.target.value))}
+                  className="w-full h-1 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-accent-red"
+                />
+                <div className="flex justify-between text-[8px] font-mono text-slate-500">
+                  <span>100 JUTA</span>
+                  <span>500 JUTA+</span>
+                </div>
+              </div>
+
+              {/* CAR BRAND PILLS */}
+              <div className="space-y-2 pt-2 border-t border-solid border-slate-150 dark:border-white/5">
+                <span className={`block text-[9px] font-mono uppercase tracking-widest ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Merek / Brand
+                </span>
+                <div className="flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto pr-1">
+                  {availableBrands.map((brand) => {
+                    const isSelected = selectedBrand === brand;
+                    return (
+                      <button
+                        key={brand}
+                        onClick={() => setSelectedBrand(brand)}
+                        className={`text-[9px] uppercase font-bold tracking-wider px-2.5 py-1.5 rounded-xl font-mono transition-all border cursor-pointer
+                          ${isSelected 
+                            ? 'bg-accent-red border-accent-red text-white shadow-sm shadow-red-950/25' 
+                            : (theme === 'light'
+                              ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
+                              : 'bg-white/5 hover:bg-white/10 border-white/5 text-slate-300'
+                            )
+                          }`}
+                      >
+                        {brand === 'All' ? 'Semua' : brand}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* TRANSMISSION PILLS */}
+              <div className="space-y-2 pt-2 border-t border-solid border-slate-150 dark:border-white/5">
+                <span className={`block text-[9px] font-mono uppercase tracking-widest ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Transmisi
+                </span>
+                <div className={`p-1 flex rounded-2xl border ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-[#0f1524] border-white/5'}`}>
+                  {[
+                    { id: 'All', label: 'Semua' },
+                    { id: 'AT', label: 'Otomatis' },
+                    { id: 'MT', label: 'Manual' }
+                  ].map((tr) => {
+                    const isSelected = selectedTrans === tr.id;
+                    return (
+                      <button
+                        key={tr.id}
+                        type="button"
+                        onClick={() => setSelectedTrans(tr.id)}
+                        className={`flex-1 text-center py-2 text-[9px] uppercase tracking-wider font-sans font-bold rounded-xl transition-all cursor-pointer border-0
+                          ${isSelected 
+                            ? 'bg-accent-red text-white shadow-md' 
+                            : (theme === 'light' ? 'text-slate-600 hover:text-slate-900 bg-transparent' : 'text-slate-400 hover:text-slate-200 bg-transparent')}`}
+                      >
+                        {tr.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* BODY TYPE OPTIONS */}
+              <div className="space-y-2 pt-2 border-t border-solid border-slate-150 dark:border-white/5">
+                <span className={`block text-[9px] font-mono uppercase tracking-widest ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Tipe Bodi
+                </span>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {['All', 'SUV', 'MPV/Van', 'Hatchback'].map((bType) => {
+                    const isSelected = selectedBodyType === bType;
+                    return (
+                      <button
+                        key={bType}
+                        type="button"
+                        onClick={() => setSelectedBodyType(bType)}
+                        className={`text-center py-2 text-[9px] uppercase tracking-wider font-mono font-bold rounded-xl border transition-all cursor-pointer
+                          ${isSelected 
+                            ? 'bg-accent-red border-accent-red text-white shadow-sm' 
+                            : (theme === 'light'
+                              ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
+                              : 'bg-white/5 hover:bg-white/10 border-white/5 text-slate-400'
+                            )}`}
+                      >
+                        {bType === 'All' ? 'Semua Tipe' : bType}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+            </div>
+
+            {/* RIGHT MAIN CATALOG GRID AREA */}
+            <div className="lg:col-span-9 space-y-6">
+              
+              {/* Grid Header and Sorting */}
+              <div className={`flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between pb-4 border-b
+                ${theme === 'light' ? 'border-slate-200' : 'border-white/5'}`}
+              >
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className={`font-sans font-black text-xl tracking-tight leading-none ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}>
+                      {filteredCars.length} Unit Mobil Tersedia
+                    </span>
+                    {favorites.length > 0 && (
+                      <span className="bg-red-500/10 border border-red-500/20 text-red-500 font-mono text-[9px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse">
+                        ♥ {favorites.length} Favorit
+                      </span>
+                    )}
+                  </div>
+                  <span className={`text-[10px] font-mono mt-1 block leading-none ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                    Semua unit bersertifikasi & telah terbit hasil inspeksi independen
+                  </span>
+                </div>
+
+                {/* Sort Option dropdown */}
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <span className={`text-[10px] font-mono leading-none ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'} shrink-0`}>
+                    Urutan:
+                  </span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    className={`text-[10px] font-sans font-bold px-3.5 py-2 rounded-xl outline-none cursor-pointer border transition-all
+                      ${theme === 'light'
+                        ? 'bg-white border-slate-205 text-slate-700 shadow-sm focus:border-accent-red'
+                        : 'bg-[#111827] border-white/5 text-slate-300 focus:border-accent-red'
+                      }`}
+                  >
+                    <option value="default">Rekomendasi Terpopuler</option>
+                    <option value="price-low">Harga Tertentu: Terendah ke Termahal</option>
+                    <option value="price-high">Harga Tertentu: Termahal ke Terendah</option>
+                    <option value="year-new">Tahun Pabrikan: Paling Baru</option>
+                    <option value="mileage-low">Odometer: Kilometer Terendah</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Main Cards Grid */}
+              {filteredCars.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {filteredCars.map((car) => {
+                    const isFav = favorites.includes(car.id);
+                    const carLocation = car.year < 2017 || car.brand === 'Suzuki' ? 'Branch DTC Wonokromo' : 'Showroom Utama Wiyung';
+                    const score = (4.7 + (parseInt(car.id.slice(-1)) || 5) * 0.05).toFixed(1);
+                    const starsCount = 38 + (parseInt(car.id.slice(-2)) || 21);
+                    const bTypeClass = getBodyType(car);
+
+                    return (
+                      <div 
+                        key={car.id}
+                        onClick={() => setSelectedCar(car)}
+                        className={`group border rounded-[32px] overflow-hidden transition-all duration-300 hover:-translate-y-1 block flex flex-col justify-between cursor-pointer
+                          ${theme === 'light'
+                            ? 'bg-white border-slate-200/80 shadow-md shadow-slate-250/30 hover:shadow-xl hover:border-accent-red'
+                            : 'bg-[#111827] border-white/5 shadow-lg shadow-black/85 hover:border-accent-red/50'
+                          }`}
+                      >
+                        {/* Card Upper Body */}
+                        <div>
+                          
+                          {/* Metadata Bar (Replicates rating/favorite bar in picture) */}
+                          <div className="px-5 pt-4 flex justify-between items-center z-10 relative">
+                            <div className="flex items-center gap-1.5">
+                              {/* Location */}
+                              <div className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-[8.5px] font-bold font-sans uppercase tracking-wider
+                                ${theme === 'light' ? 'bg-slate-100 text-slate-600' : 'bg-white/5 text-slate-400'}`}
+                              >
+                                <MapPin className="w-2.5 h-2.5 text-accent-red shrink-0" />
+                                <span>{carLocation.replace('Branch ', '').replace('Showroom Utama ', '')}</span>
+                              </div>
+
+                              {/* Ratings */}
+                              <div className={`flex items-center gap-0.5 px-2 py-1 rounded-xl text-[8.5px] font-bold font-mono
+                                ${theme === 'light' ? 'bg-amber-500/15 text-amber-700' : 'bg-amber-500/10 text-amber-400'}`}
+                              >
+                                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-500 dark:text-amber-400 shrink-0" />
+                                <span>{score}</span>
+                                <span className="opacity-60 text-[7px]">({starsCount})</span>
+                              </div>
+                            </div>
+
+                            {/* Favorite Button (Replicates heart overlay) */}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFavorite(car.id);
+                              }}
+                              className={`p-2 rounded-full transition-all cursor-pointer border hover:scale-105 active:scale-95
+                                ${isFav 
+                                  ? 'bg-rose-500/15 border-rose-500/30 text-rose-500' 
+                                  : (theme === 'light' 
+                                    ? 'bg-slate-50 border-slate-200 text-slate-400 hover:text-slate-600' 
+                                    : 'bg-white/5 border-white/5 text-slate-400 hover:text-white')}`}
+                              title={isFav ? "Hapus dari unit disukai" : "Sukai unit mobil ini"}
+                            >
+                              <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-rose-500 text-rose-500' : ''}`} />
+                            </button>
+                          </div>
+
+                          {/* Elegant Vehicle visual render */}
+                          <div className="relative mx-5 mt-3.5 bg-gradient-to-b from-transparent to-slate-100/50 dark:to-white/2 rounded-2xl overflow-hidden aspect-[16/10] flex items-center justify-center">
+                            {car.isSold ? (
+                              <span className="absolute top-3 left-3 z-10 bg-accent-red text-white font-black px-2.5 py-0.5 rounded uppercase tracking-wider text-[8px] shadow-sm shadow-black/20">
+                                TERJUAL
+                              </span>
+                            ) : car.badge !== 'NONE' ? (
+                              <span className={`absolute top-3 left-3 z-10 text-[8px] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider shadow-sm
+                                ${car.badge === 'HOT' ? 'bg-accent-red text-white' : (theme === 'light' ? 'bg-slate-900 text-white' : 'bg-navy-deep text-slate-300 border border-navy-light')}`}>
+                                {car.badge}
+                              </span>
+                            ) : null}
+
+                            {/* Show actual image or flat vector */}
+                            <div className="w-full h-full transform transition-transform duration-500 group-hover:scale-104">
+                              <CarIllustration type={car.image} brand={car.brand} isSold={car.isSold} />
+                            </div>
+
+                            {/* Flat shadow representation at bottom of rendering */}
+                            <div className="absolute bottom-0 inset-x-0 h-4 bg-gradient-to-t from-black/5 to-transparent pointer-events-none" />
+                          </div>
+
+                          {/* Text labels matching the studio aesthetic */}
+                          <div className="px-5 pt-4 space-y-2">
+                            <div>
+                              <h3 className={`font-sans font-black text-base uppercase tracking-tight leading-tight group-hover:text-accent-red transition-colors line-clamp-1
+                                ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}
+                              >
+                                {car.name}
+                              </h3>
+                              {/* Spec metrics list - e.g. "Toyota • SUV • Bensin" */}
+                              <p className={`text-[10px] font-semibold tracking-wider font-sans mt-1 uppercase
+                                ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}
+                              >
+                                {car.brand} • {bTypeClass} • {car.fuelType} • {car.engineCc}L CC
+                              </p>
+                            </div>
+
+                            {/* Additional metadata specs */}
+                            <div className="grid grid-cols-2 gap-2 pt-1">
+                              <div className={`p-2 rounded-xl flex items-center justify-between text-[9px] font-mono border
+                                ${theme === 'light' ? 'bg-slate-50 border-slate-100 text-slate-700' : 'bg-white/2 border-white/2 text-slate-300'}`}
+                              >
+                                <span className="opacity-50">MILEAGE:</span>
+                                <span className="font-extrabold">{car.mileage.toLocaleString('id-ID')} KM</span>
+                              </div>
+                              <div className={`p-2 rounded-xl flex items-center justify-between text-[9px] font-mono border
+                                ${theme === 'light' ? 'bg-slate-50 border-slate-100 text-slate-700' : 'bg-white/2 border-white/2 text-slate-300'}`}
+                              >
+                                <span className="opacity-50 font-sans">TRANS:</span>
+                                <span className="font-extrabold">{car.transmission === 'AT' ? 'Otomatis' : 'Manual'}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                        </div>
+
+                        {/* Card pricing and checkout actions */}
+                        <div className="px-5 pb-5 pt-4">
+                          <hr className={`border-t mb-3.5 ${theme === 'light' ? 'border-slate-150' : 'border-white/5'}`} />
+                          
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className={`text-[8.5px] font-mono tracking-widest block uppercase leading-none mb-1.5
+                                ${theme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>
+                                Harga Cash
+                              </span>
+                              <span className="font-sans font-black text-base sm:text-lg text-accent-red tracking-tight leading-none">
+                                Rp {(car.price / 1000000).toFixed(0)} Juta
+                              </span>
+                              {/* Approximate Monthly Payment Sim */}
+                              <span className="block text-[8px] font-bold text-slate-400 mt-1 uppercase">
+                                Angsuran ~Rp {((car.price * 1.15) / 48000000).toFixed(1)} Jt/Bln
+                              </span>
+                            </div>
+
+                            {/* Sleek chat click action */}
+                            <a
+                              href={`https://wa.me/6281330253797?text=Halo%2520Jaya%2520Berkat%2520Mobil,%2520saya%2520tertarik%2520dengan%2520unit%2520*${encodeURIComponent(car.name)}*%2520${car.year}%2520yang%2520tertulis%2520terbaru%2520di%2520katalog.`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex items-center gap-1.5 bg-accent-red hover:bg-[#b02f20] text-white px-3.5 py-2.5 rounded-2xl transition-all duration-200 text-[10px] font-bold uppercase tracking-wider font-sans cursor-pointer shadow-md shadow-red-950/15 hover:shadow-lg hover:scale-102 active:scale-97"
+                            >
+                              <MessageCircle className="w-3.5 h-3.5 shrink-0" />
+                              <span>Tanya Admin</span>
+                            </a>
+                          </div>
+                        </div>
+
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className={`p-16 text-center border-2 border-dashed rounded-[32px] space-y-4
+                  ${theme === 'light' 
+                    ? 'bg-slate-50 border-slate-200 text-slate-500 shadow-sm' 
+                    : 'bg-[#111827] border-white/5 text-slate-400'
+                  }`}
+                >
+                  <div className="w-12 h-12 rounded-full bg-accent-red/10 flex items-center justify-center mx-auto text-accent-red shadow-sm shadow-red-950/5">
+                    <Sliders className="w-6 h-6 animate-pulse" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className={`font-sans font-black text-base uppercase tracking-wide ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}>
+                      Unit Tidak Ditemukan
+                    </h4>
+                    <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 leading-relaxed">
+                      Tidak ada kendaraan di JBM Surabaya yang memenuhi semua kriteria pencarian Anda saat ini. Coba ubah atau atur ulang opsi filter.
+                    </p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedBrand('All');
+                      setSelectedTrans('All');
+                      setPriceRange(500000000);
+                      setSelectedBodyType('All');
+                      setOnlyAvailable(false);
+                      setSortBy('default');
+                    }}
+                    className="px-5 py-2.5 hover:bg-[#ab2f20] rounded-xl bg-accent-red text-white text-[10px] font-sans font-black uppercase tracking-wider transition-all cursor-pointer shadow-md border-transparent"
+                  >
+                    Reset Semua Kriteria
+                  </button>
+                </div>
+              )}
+
             </div>
 
           </div>
-
-          {/* Results Block */}
-          {filteredCars.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredCars.map((car) => (
-                <div 
-                  key={car.id}
-                  onClick={() => setSelectedCar(car)}
-                  className="bg-navy-card border border-navy-light hover:border-accent-red rounded overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group cursor-pointer"
-                >
-                  <div className="relative">
-                    {car.isSold ? (
-                      <span className="absolute top-3 left-3 z-10 bg-accent-red text-white font-bold px-2 py-0.5 rounded uppercase tracking-widest text-[8px] shadow shadow-red-950/40">
-                        TERJUAL
-                      </span>
-                    ) : car.badge !== 'NONE' ? (
-                      <span className={`absolute top-3 left-3 z-10 text-[8px] font-bold px-2 py-0.5 rounded uppercase tracking-wider shadow
-                        ${car.badge === 'HOT' ? 'bg-accent-red text-white' : 'bg-navy-deep text-slate-300 border border-navy-light'}`}>
-                        {car.badge}
-                      </span>
-                    ) : null}
-
-                    {/* SVG Illustration of car structure */}
-                    <CarIllustration type={car.image} brand={car.brand} isSold={car.isSold} />
-
-                    {/* Glassy detail overlay prompt */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 z-10 backdrop-blur-[1px]">
-                      <span className="bg-black/80 text-white font-mono text-[9px] uppercase tracking-[0.2em] px-3 py-1.5 border border-white/10 rounded shadow-lg">
-                        [ LIHAT SPESIFIKASI ]
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="p-5 space-y-3">
-                    <div>
-                      <h3 className="font-sans font-bold text-slate-100 group-hover:text-accent-red transition-colors leading-tight uppercase tracking-wide">
-                        {car.name}
-                      </h3>
-                      <div className="flex gap-2 text-[10px] font-mono text-slate-500 mt-1.5 uppercase tracking-wide">
-                        <span>🗓️ {car.year}</span>
-                        <span>⛽ {car.fuelType}</span>
-                        <span>⚡ {car.engineCc} CC</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-navy-deep p-2.5 rounded font-mono text-[11px] text-slate-400 flex justify-between border border-navy-light/10">
-                      <span>Transmisi:</span>
-                      <span className="text-slate-100 font-bold">{car.transmission === 'AT' ? 'Otomatis' : 'Manual'}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-2 border-t border-navy-light">
-                      <div>
-                        <span className="text-[9px] text-slate-500 uppercase tracking-widest block leading-none">HARGA CASH</span>
-                        <span className="font-sans font-black text-base text-accent-red">
-                          Rp {car.price.toLocaleString('id-ID')}
-                        </span>
-                      </div>
-
-                      {/* WA Link with customizable unit details */}
-                      <a
-                        href={`https://wa.me/6281330253797?text=Halo%20Jaya%20Berkat%20Mobil,%20apakah%20mobil%20*${encodeURIComponent(car.name)}* ${car.year} masih%20ada?`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex items-center gap-1.5 bg-navy-deep hover:bg-accent-red text-slate-300 hover:text-white px-3.5 py-1.5 rounded border border-navy-light hover:border-accent-red transition-all duration-200 text-xs font-bold uppercase tracking-wider font-sans"
-                      >
-                        <MessageCircle className="w-3.5 h-3.5 text-accent-red group-hover:text-white" />
-                        <span>Tanya WA</span>
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-navy-card text-center p-12 border border-navy-light rounded-lg space-y-3 shadow-lg">
-              <p className="text-slate-400 text-sm">Tidak ada dekorasi unit mobil yang sesuai dengan kriteria filter Anda.</p>
-              <button 
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedBrand('All');
-                  setSelectedTrans('All');
-                  setPriceRange(500000000);
-                }}
-                className="text-xs font-bold text-accent-red uppercase hover:underline font-mono"
-              >
-                Reset Semua Filter
-              </button>
-            </div>
-          )}
 
         </div>
       )}

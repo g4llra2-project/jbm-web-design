@@ -413,7 +413,33 @@ export const INITIAL_CMS_DATA: CMSData = {
       sold: "100+ Unit",
       avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&h=400&q=80"
     }
-  ]
+  ],
+  seo: {
+    beranda: {
+      title: "Jaya Berkat Mobil Surabaya - Jual Beli Mobil Bekas Berkualitas",
+      description: "Jaya Berkat Mobil (JBM) adalah showroom mobil bekas terpercaya di Surabaya dengan 2 cabang (Wiyung & DTC). Layanan tukar-tambah instan dan cicilan ringan."
+    },
+    'mobil-dijual': {
+      title: "Katalog Mobil Bekas Surabaya Terbaik - Jaya Berkat Mobil",
+      description: "Cari & temukan mobil bekas bersertifikat bebas banjir & tabrak di Surabaya. Beragam opsi transmisi, tahun tinggi, kilometer asli terjamin."
+    },
+    profil: {
+      title: "Tentang Jaya Berkat Mobil (JBM) - Dealer Tepercaya Surabaya",
+      description: "Pelajari komitmen mutu Jaya Berkat Mobil (JBM). Cari tahu mengapa kami menjadi pilihan utama bursa mobil bekas berkualitas di Jawa Timur selama bertahun-tahun."
+    },
+    'hall-of-fame': {
+      title: "Hall of Fame JBM Surabaya - Bukti Nyata Pelanggan Puas",
+      description: "Lihat galeri serah terima unit mobil komersial & keluarga legendaris di Surabaya. Nikmati visual blueprint 3D interaktif pelanggan setia JBM."
+    },
+    'promo-artikel': {
+      title: "Tips & Promo Otomotif Terbaru Surabaya - Jaya Berkat Mobil",
+      description: "Sajian edukasi dunia otomotif, trik merawat sasis mobil, rekomendasi compact city car, dan promo cashback eksklusif hanya di JBM."
+    },
+    kontak: {
+      title: "Hubungi Showroom JBM Surabaya (Wiyung & DTC Wonokromo Mall)",
+      description: "Butuh bantuan check fisik atau pengadaan unit mobil baru hibrid? Hubungi Tim Sales kami di nomor WhatsApp resmi dan lihat peta rute lokasi showroom."
+    }
+  }
 };
 
 export function getStoredCMSData(): CMSData {
@@ -427,6 +453,9 @@ export function getStoredCMSData(): CMSData {
         }
         if (!parsed.advisors) {
           parsed.advisors = INITIAL_CMS_DATA.advisors;
+        }
+        if (!parsed.seo) {
+          parsed.seo = INITIAL_CMS_DATA.seo;
         }
         return parsed;
       }

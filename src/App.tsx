@@ -14,14 +14,57 @@ export default function App() {
     return (localStorage.getItem('jbm_theme') as 'dark' | 'light') || 'dark';
   });
 
+  const [darkVariant, setDarkVariant] = useState<'slate' | 'abyss' | 'obsidian'>(() => {
+    return (localStorage.getItem('jbm_dark_variant') as 'slate' | 'abyss' | 'obsidian') || 'obsidian';
+  });
+
   useEffect(() => {
     localStorage.setItem('jbm_theme', theme);
     if (theme === 'light') {
       document.body.classList.add('light-theme');
+      // Reset color variables for light mode standard colors
+      document.documentElement.style.removeProperty('--navy-deep');
+      document.documentElement.style.removeProperty('--navy-card');
+      document.documentElement.style.removeProperty('--navy-light');
     } else {
       document.body.classList.remove('light-theme');
+      // Set the dynamic color values depending on chosen dark theme variant
+      if (darkVariant === 'slate') {
+        document.documentElement.style.setProperty('--navy-deep', '#0f172a');
+        document.documentElement.style.setProperty('--navy-card', '#1e293b');
+        document.documentElement.style.setProperty('--navy-light', '#334155');
+      } else if (darkVariant === 'abyss') {
+        document.documentElement.style.setProperty('--navy-deep', '#080d19');
+        document.documentElement.style.setProperty('--navy-card', '#111a2e');
+        document.documentElement.style.setProperty('--navy-light', '#1f2a45');
+      } else if (darkVariant === 'obsidian') {
+        document.documentElement.style.setProperty('--navy-deep', '#030712');
+        document.documentElement.style.setProperty('--navy-card', '#0e1424');
+        document.documentElement.style.setProperty('--navy-light', '#1e293b');
+      }
     }
-  }, [theme]);
+    localStorage.setItem('jbm_dark_variant', darkVariant);
+  }, [theme, darkVariant]);
+
+  // Update document title and description based on current activeTab SEO config
+  useEffect(() => {
+    const seoConfig = cmsData.seo;
+    if (seoConfig) {
+      const activeSeo = seoConfig[activeTab as keyof typeof seoConfig];
+      if (activeSeo) {
+        document.title = activeSeo.title;
+        
+        // Find or create meta description tag
+        let metaDescription = document.querySelector('meta[name="description"]');
+        if (!metaDescription) {
+          metaDescription = document.createElement('meta');
+          metaDescription.setAttribute('name', 'description');
+          document.head.appendChild(metaDescription);
+        }
+        metaDescription.setAttribute('content', activeSeo.description);
+      }
+    }
+  }, [activeTab, cmsData]);
 
   // Save to localStorage when database changes
   const handleCMSDataChange = (newData: CMSData) => {
@@ -77,6 +120,8 @@ export default function App() {
               cmsOpen={cmsOpen}
               setCmsOpen={setCmsOpen}
               theme={theme}
+              darkVariant={darkVariant}
+              setDarkVariant={setDarkVariant}
             />
           </main>
         </div>
