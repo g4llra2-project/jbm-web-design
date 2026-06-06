@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { Upload, X, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, AlertCircle, CloudLightning, Database } from 'lucide-react';
+import { isR2Configured, uploadToR2 } from '../lib/cloudflare';
 
 interface ImageUploaderProps {
   label: string;
@@ -16,10 +17,11 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [compressing, setCompressing] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Responsive client-side image compression using canvas
+  // Responsive client-side image compression using canvas and direct Cloudflare R2 upload
   const processAndCompressFile = (file: File) => {
     if (!file.type.startsWith('image/')) {
       setErrorMessage('File harus berupa gambar (PNG, JPG, WebP, dll)');
@@ -61,12 +63,46 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           
           // Export as compressed output
           const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
-          onChange(compressedDataUrl);
+          
+          if (isR2Configured) {
+            setCompressing(false);
+            setUploading(true);
+            uploadToR2(compressedDataUrl, file.name)
+              .then((cdnUrl) => {
+                onChange(cdnUrl);
+                setUploading(false);
+              })
+              .catch((err) => {
+                console.error('R2 upload failed, fallback to local base64:', err);
+                setErrorMessage('Gagal upload R2. Menyimpan sebagai data lokal.');
+                onChange(compressedDataUrl); // Safe fallback
+                setUploading(false);
+              });
+          } else {
+            onChange(compressedDataUrl);
+            setCompressing(false);
+          }
         } else {
           // Fallback if canvas context fails
-          onChange(event.target?.result as string);
+          const fallbackData = event.target?.result as string;
+          if (isR2Configured) {
+            setCompressing(false);
+            setUploading(true);
+            uploadToR2(fallbackData, file.name)
+              .then((cdnUrl) => {
+                onChange(cdnUrl);
+                setUploading(false);
+              })
+              .catch((err) => {
+                console.error('R2 upload failed, fallback:', err);
+                onChange(fallbackData);
+                setUploading(false);
+              });
+          } else {
+            onChange(fallbackData);
+            setCompressing(false);
+          }
         }
-        setCompressing(false);
       };
       
       img.onerror = () => {
@@ -119,13 +155,22 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   };
 
   const isBase64 = currentValue && currentValue.startsWith('data:image/');
+  const isCdnUrl = currentValue && currentValue.includes('r2.cloudflarestorage') || (currentValue && (currentValue.startsWith('http') && !isBase64));
   const hasValue = !!currentValue;
 
   return (
     <div className="space-y-2 text-left" id={`uploader_${label.replace(/\s+/g, '_')}`}>
-      <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-bold">
-        {label}
-      </label>
+      <div className="flex items-center justify-between">
+        <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-bold">
+          {label}
+        </label>
+        {isR2Configured && (
+          <span className="text-[7.5px] font-mono text-[#D4A017] uppercase flex items-center gap-1 font-bold">
+            <CloudLightning className="w-2.5 h-2.5" />
+            R2 Active
+          </span>
+        )}
+      </div>
 
       {/* Main Drag-n-Drop Container Box */}
       <div
@@ -149,10 +194,12 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           className="hidden"
         />
 
-        {compressing ? (
+        {compressing || uploading ? (
           <div className="space-y-1.5 py-4">
             <div className="w-5 h-5 border-2 border-accent-red border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-[9px] font-mono text-gray-400 uppercase tracking-widest">Memproses & Kompresi Gambar...</p>
+            <p className="text-[9px] font-mono text-[#D4A017] uppercase tracking-widest">
+              {compressing ? 'Mengompresi Ukuran Gambar...' : 'MENGUNGGAH KE CLOUDFLARE R2...'}
+            </p>
           </div>
         ) : hasValue ? (
           <div className="w-full flex items-center gap-3 relative group text-left" onClick={(e) => e.stopPropagation()}>
@@ -171,7 +218,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                 <span className="text-emerald-500">●</span> Gambar Siap Digunakan
               </div>
               <p className="text-[8px] font-mono text-gray-500 truncate mt-0.5" title={currentValue}>
-                {isBase64 ? 'Format: Base64 URI (Compressed JPEG)' : currentValue}
+                {isBase64 ? 'Format: Base64 URI (Local Sandbox)' : currentValue}
               </p>
             </div>
 
@@ -195,7 +242,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               Tarik & Lepas File di Sini atau <span className="text-[#D4A017] underline">Pilih File</span>
             </div>
             <p className="text-[7.5px] font-mono text-gray-500 uppercase tracking-widest">
-              JPG, PNG, WEBP (Maks 10MB • Auto-Kompres Ke Sektor Ringan)
+              {isR2Configured ? 'Auto-Compress & Unggah ke Cloudflare R2 CDN' : 'JPG, PNG, WEBP (Maks 10MB • Kompres Otomatis)'}
             </p>
           </div>
         )}
@@ -220,9 +267,16 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             className="w-full bg-[#101c33] border border-white/10 rounded px-2 py-1 text-[10px] text-white focus:border-[#D4A017] outline-none"
           />
         </div>
+        {!isBase64 && hasValue && (
+          <span className="text-[8px] font-mono text-emerald-500 uppercase font-black bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+            <CloudLightning className="w-2.5 h-2.5" />
+            R2 CLOUD
+          </span>
+        )}
         {isBase64 && (
-          <span className="text-[8px] font-mono text-emerald-500 uppercase font-black bg-emerald-500/10 px-1.5 py-0.5 rounded">
-            UPLOADED
+          <span className="text-[8px] font-mono text-amber-500 uppercase font-black bg-amber-500/10 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+            <Database className="w-2.5 h-2.5" />
+            LOCAL
           </span>
         )}
       </div>

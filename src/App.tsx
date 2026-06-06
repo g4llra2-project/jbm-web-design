@@ -4,12 +4,52 @@ import { CMSData } from './types';
 import { Navbar } from './components/Navbar';
 import { Dashboard } from './components/Dashboard';
 import { CMSPanel } from './components/CMSPanel';
-import { Sparkles, Info, CheckSquare } from 'lucide-react';
+import { Sparkles, Info, CheckSquare, Cloud, CloudLightning, Database, AlertCircle } from 'lucide-react';
+import { isSupabaseConfigured, fetchCMSDataFromSupabase, saveCMSDataToSupabase } from './lib/supabase';
 
 export default function App() {
   const [cmsData, setCmsData] = useState<CMSData>(getStoredCMSData());
   const [activeTab, setActiveTab] = useState<string>('beranda');
-  const [cmsOpen, setCmsOpen] = useState<boolean>(true); // Start with CMS open for high discoverability
+  
+  // Track if we are on a path-based admin route (e.g. /admin, #/admin, #admin, or url param admin)
+  const [isRouteAdmin, setIsRouteAdmin] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      const hash = window.location.hash;
+      const search = window.location.search;
+      return path === '/admin' || hash === '#/admin' || hash === '#admin' || search.includes('admin');
+    }
+    return false;
+  });
+
+  // Split-Preview mode inside Admin Portal (let admins view public changes side-by-side)
+  const [splitPreviewMode, setSplitPreviewMode] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleLocationCheck = () => {
+      if (typeof window !== 'undefined') {
+        const path = window.location.pathname;
+        const hash = window.location.hash;
+        const search = window.location.search;
+        const isAdmin = path === '/admin' || hash === '#/admin' || hash === '#admin' || search.includes('admin');
+        setIsRouteAdmin(isAdmin);
+      }
+    };
+    window.addEventListener('popstate', handleLocationCheck);
+    window.addEventListener('hashchange', handleLocationCheck);
+    return () => {
+      window.removeEventListener('popstate', handleLocationCheck);
+      window.removeEventListener('hashchange', handleLocationCheck);
+    };
+  }, []);
+
+  const exitAdminPortal = () => {
+    if (typeof window !== 'undefined') {
+      window.history.pushState({}, '', '/');
+      setIsRouteAdmin(false);
+    }
+  };
+
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (localStorage.getItem('jbm_theme') as 'dark' | 'light') || 'dark';
   });
@@ -17,6 +57,10 @@ export default function App() {
   const [darkVariant, setDarkVariant] = useState<'slate' | 'abyss' | 'obsidian'>(() => {
     return (localStorage.getItem('jbm_dark_variant') as 'slate' | 'abyss' | 'obsidian') || 'obsidian';
   });
+
+  const [supabaseSyncStatus, setSupabaseSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error' | 'not-configured'>(
+    isSupabaseConfigured ? 'idle' : 'not-configured'
+  );
 
   useEffect(() => {
     localStorage.setItem('jbm_theme', theme);
@@ -46,6 +90,33 @@ export default function App() {
     localStorage.setItem('jbm_dark_variant', darkVariant);
   }, [theme, darkVariant]);
 
+  // Read initial configuration from Supabase if configured
+  useEffect(() => {
+    if (isSupabaseConfigured) {
+      setSupabaseSyncStatus('syncing');
+      fetchCMSDataFromSupabase()
+        .then((supabaseData) => {
+          if (supabaseData) {
+            setCmsData(supabaseData);
+            saveStoredCMSData(supabaseData); // sync local storage as fallback
+            setSupabaseSyncStatus('synced');
+          } else {
+            // Seed Supabase with our default/local state if no data row exists on the table yet
+            saveCMSDataToSupabase(cmsData)
+              .then(() => setSupabaseSyncStatus('synced'))
+              .catch((err) => {
+                console.error('Failed to seed initial Supabase CMS config row:', err);
+                setSupabaseSyncStatus('error');
+              });
+          }
+        })
+        .catch((error) => {
+          console.error('Could not fetch from Supabase:', error);
+          setSupabaseSyncStatus('error');
+        });
+    }
+  }, []);
+
   // Update document title and description based on current activeTab SEO config
   useEffect(() => {
     const seoConfig = cmsData.seo;
@@ -66,11 +137,82 @@ export default function App() {
     }
   }, [activeTab, cmsData]);
 
-  // Save to localStorage when database changes
+  // Save to Web storage state and fire client-to-Supabase request asynchronously
   const handleCMSDataChange = (newData: CMSData) => {
     setCmsData(newData);
     saveStoredCMSData(newData);
+
+    if (isSupabaseConfigured) {
+      setSupabaseSyncStatus('syncing');
+      saveCMSDataToSupabase(newData)
+        .then(() => {
+          setSupabaseSyncStatus('synced');
+        })
+        .catch((error) => {
+          console.error('Error auto-syncing to Supabase:', error);
+          setSupabaseSyncStatus('error');
+        });
+    }
   };
+
+  if (isRouteAdmin) {
+    return (
+      <div className="min-h-screen bg-[#030712] font-sans antialiased text-slate-100 flex flex-col lg:flex-row">
+        
+        {/* Split Screen Live view on large screens (if enabled by administrator) */}
+        {splitPreviewMode && (
+          <div className="flex-grow hidden lg:flex flex-col border-r border-white/5 overflow-y-auto max-h-screen relative bg-navy-deep">
+            {/* Interactive watermark bar */}
+            <div className="bg-[#121c33] border-b border-white/5 py-2 px-5 text-[9px] font-mono text-[#D4A017] uppercase font-extrabold flex items-center justify-between tracking-widest shrink-0 sticky top-0 z-50">
+              <span className="flex items-center gap-1.5 animate-pulse">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Split Preview: JBM Live Presentation
+              </span>
+              <span className="text-gray-400 font-normal">Tampilan Langsung Real-time</span>
+            </div>
+            
+            {/* Loaded Frontend content */}
+            <div className="flex-1 opacity-90 scale-95 origin-top duration-300">
+              <Navbar 
+                activeTab={activeTab} 
+                setActiveTab={setActiveTab} 
+                cmsOpen={true} 
+                setCmsOpen={() => {}}
+                brandTitle={cmsData.hero.titlePrimary ? 'Jaya Berkat' : 'JBM'}
+                theme={theme}
+                setTheme={setTheme}
+                isAdminModeEnabled={false}
+              />
+              <main className="pb-16">
+                <Dashboard 
+                  cmsData={cmsData} 
+                  activeTab={activeTab} 
+                  setActiveTab={setActiveTab} 
+                  cmsOpen={true}
+                  setCmsOpen={() => {}}
+                  theme={theme}
+                  darkVariant={darkVariant}
+                  setDarkVariant={setDarkVariant}
+                />
+              </main>
+            </div>
+          </div>
+        )}
+
+        {/* Dedicated Admin CMS Workspace Panel */}
+        <div className={`w-full shrink-0 flex flex-col ${splitPreviewMode ? 'lg:w-[45%] xl:w-[40%] bg-[#0a0f1d]' : 'w-full min-h-screen'}`}>
+          <CMSPanel 
+            cmsData={cmsData} 
+            onChange={handleCMSDataChange} 
+            onClose={exitAdminPortal}
+            splitPreviewMode={splitPreviewMode}
+            onToggleSplitPreview={() => setSplitPreviewMode(prev => !prev)}
+            supabaseSyncStatus={supabaseSyncStatus}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-navy-deep font-sans antialiased text-slate-100 flex flex-col selection:bg-accent-red/30 selection:text-white">
@@ -79,37 +221,22 @@ export default function App() {
       <div className="fixed inset-0 pointer-events-none bg-gradient-to-br from-navy-card/20 via-transparent to-transparent z-0" />
 
       {/* Main Orchestrated View Wrapper */}
-      <div className="relative flex-grow flex flex-col lg:flex-row z-10">
+      <div className="relative flex-grow flex flex-col z-10">
         
-        {/* LEFT / MAIN WORKSPACE: THE LIVE JBM WEBSITE PREVIEW */}
-        <div className={`flex-1 flex flex-col transition-all duration-300 ${cmsOpen ? 'lg:w-[65%] xl:w-[70%]' : 'w-full'}`}>
+        {/* PUBLIC SITE WRAPPER */}
+        <div className="flex-1 flex flex-col w-full">
           
-          {/* Header Navigation with logo and operational status */}
+          {/* Clean Customer Header Navigation - 100% pristine public state */}
           <Navbar 
             activeTab={activeTab} 
             setActiveTab={setActiveTab} 
-            cmsOpen={cmsOpen} 
-            setCmsOpen={setCmsOpen}
+            cmsOpen={false} 
+            setCmsOpen={() => {}}
             brandTitle={cmsData.hero.titlePrimary ? 'Jaya Berkat' : 'JBM'}
             theme={theme}
             setTheme={setTheme}
+            isAdminModeEnabled={false}
           />
-
-          {/* Quick interactive banner inside live site indicating edit state */}
-          {cmsOpen && (
-            <div className="bg-accent-red/5 border-b border-navy-light/40 px-4 py-2 text-xs text-accent-red flex items-center justify-between font-sans">
-              <span className="flex items-center gap-1.5 font-semibold">
-                <Sparkles className="w-3.5 h-3.5 text-accent-red animate-pulse" />
-                Mode Administrator Aktif — Panel kontrol CMS interaktif terbuka di sebelah kanan.
-              </span>
-              <button 
-                onClick={() => setCmsOpen(false)}
-                className="hover:underline font-bold text-[11px] uppercase tracking-wider text-slate-400 hover:text-white shrink-0 ml-4 font-sans"
-              >
-                Tutup Mode Admin
-              </button>
-            </div>
-          )}
 
           {/* Content Pages Router */}
           <main className="flex-grow">
@@ -117,25 +244,14 @@ export default function App() {
               cmsData={cmsData} 
               activeTab={activeTab} 
               setActiveTab={setActiveTab} 
-              cmsOpen={cmsOpen}
-              setCmsOpen={setCmsOpen}
+              cmsOpen={false}
+              setCmsOpen={() => {}}
               theme={theme}
               darkVariant={darkVariant}
               setDarkVariant={setDarkVariant}
             />
           </main>
         </div>
-
-        {/* RIGHT WORKSPACE: DYNAMIC CMS OFFICE CONTROL PANEL */}
-        {cmsOpen && (
-          <aside className="w-full lg:w-[35%] xl:w-[30%] lg:sticky lg:top-0 lg:h-screen shrink-0 border-t lg:border-t-0 lg:border-l border-navy-light z-30">
-            <CMSPanel 
-              cmsData={cmsData} 
-              onChange={handleCMSDataChange} 
-              onClose={() => setCmsOpen(false)} 
-            />
-          </aside>
-        )}
 
       </div>
     </div>

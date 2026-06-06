@@ -10,6 +10,7 @@ interface NavbarProps {
   brandTitle: string;
   theme: 'dark' | 'light';
   setTheme: (theme: 'dark' | 'light') => void;
+  isAdminModeEnabled?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -20,6 +21,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   brandTitle,
   theme,
   setTheme,
+  isAdminModeEnabled = false,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -180,14 +182,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span>Hubungi Sales (WA)</span>
               </a>
 
-              {/* Simple Admin toggler inside bar */}
-              <button
-                onClick={() => setCmsOpen(!cmsOpen)}
-                className={`p-2 rounded border transition-colors cursor-pointer ${cmsOpen ? 'bg-accent-red/20 border-accent-red/40 text-accent-red' : 'bg-navy-card border-navy-light text-slate-400 hover:text-white'}`}
-                title="Toggle Panel CMS"
-              >
-                <Sliders className="w-4 h-4" />
-              </button>
+              {/* Simple Admin toggler inside bar - only shown if isAdminModeEnabled is true */}
+              {isAdminModeEnabled && (
+                <button
+                  onClick={() => setCmsOpen(!cmsOpen)}
+                  className={`p-2 rounded border transition-colors cursor-pointer ${cmsOpen ? 'bg-accent-red/20 border-accent-red/40 text-accent-red' : 'bg-navy-card border-navy-light text-slate-400 hover:text-white'}`}
+                  title="Toggle Panel CMS"
+                >
+                  <Sliders className="w-4 h-4" />
+                </button>
+              )}
 
               {/* Mobile trigger for default view */}
               <button
@@ -412,9 +416,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
               <div className="flex items-center gap-4">
                 <span className="hidden sm:inline">COORD: S 7.2575° / E 112.7521°</span>
-                <span className="text-gray-400 hover:text-white transition-colors cursor-pointer" onClick={() => setCmsOpen(!cmsOpen)}>
-                  [ {cmsOpen ? 'MATIKAN' : 'AKTIFKAN'} OFFICE ADMIN MODE ]
-                </span>
+                {isAdminModeEnabled && (
+                  <span className="text-gray-400 hover:text-white transition-colors cursor-pointer animate-pulse" onClick={() => setCmsOpen(!cmsOpen)}>
+                    [ {cmsOpen ? 'MATIKAN' : 'AKTIFKAN'} OFFICE ADMIN MODE ]
+                  </span>
+                )}
                 <a 
                   href="https://instagram.com" 
                   target="_blank" 

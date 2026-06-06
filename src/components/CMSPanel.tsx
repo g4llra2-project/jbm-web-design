@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { 
   Save, Car, Plus, Trash2, Edit, Check, Settings, 
-  MessageSquare, FileText, Info, CheckSquare, X 
+  MessageSquare, FileText, Info, CheckSquare, X,
+  Lock, Unlock, ShieldAlert, LogOut, Eye, EyeOff, Globe
 } from 'lucide-react';
 import { CMSData, Car as CarType, Testimonial, BlogArticle, HallOfFameItem, SEODatabase } from '../types';
 import { ImageUploader } from './ImageUploader';
@@ -10,11 +11,47 @@ interface CMSPanelProps {
   cmsData: CMSData;
   onChange: (newData: CMSData) => void;
   onClose: () => void;
+  splitPreviewMode?: boolean;
+  onToggleSplitPreview?: () => void;
+  supabaseSyncStatus?: 'idle' | 'syncing' | 'synced' | 'error' | 'not-configured';
 }
 
-export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }) => {
+export const CMSPanel: React.FC<CMSPanelProps> = ({ 
+  cmsData, 
+  onChange, 
+  onClose,
+  splitPreviewMode = false,
+  onToggleSplitPreview = () => {},
+  supabaseSyncStatus = 'not-configured'
+}) => {
   const [activeSubTab, setActiveSubTab] = useState<'hero' | 'stok' | 'testimoni' | 'artikel' | 'kontak' | 'sales' | 'hof' | 'seo'>('hero');
   const [editingCarId, setEditingCarId] = useState<string | null>(null);
+
+  // Secure Passcode Auth gate for production/hosting
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    return sessionStorage.getItem('jbm_admin_authenticated') === 'true';
+  });
+  const [passcode, setPasscode] = useState('');
+  const [authError, setAuthError] = useState(false);
+
+  const handleAuth = (e: React.FormEvent) => {
+    e.preventDefault();
+    const configPass = (import.meta as any).env.VITE_ADMIN_PASSCODE || 'adminJBM';
+    if (passcode === configPass) {
+      setIsAdmin(true);
+      sessionStorage.setItem('jbm_admin_authenticated', 'true');
+      setAuthError(false);
+    } else {
+      setAuthError(true);
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAdmin(false);
+    sessionStorage.removeItem('jbm_admin_authenticated');
+    setPasscode('');
+  };
+
 
   // Car Form Local States
   const [carName, setCarName] = useState('');
@@ -316,22 +353,146 @@ export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }
     onChange({ ...cmsData, articles: updated });
   };
 
+  if (!isAdmin) {
+    return (
+      <div className="flex flex-col h-full bg-[#0a0f1d] border-l border-white/5 text-gray-200 justify-between">
+        {/* Header Panel */}
+        <div className="flex items-center justify-between p-4 border-b border-white/5 bg-[#101c33]">
+          <div className="flex items-center gap-2">
+            <Lock className="w-5 h-5 text-accent-red" />
+            <h2 className="font-serif font-black uppercase text-sm tracking-widest text-accent-red">
+              Restricted Portal
+            </h2>
+          </div>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-white p-1 hover:bg-white/5 rounded cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Lock Screen Centered Area */}
+        <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 text-center space-y-6">
+          <div className="w-16 h-16 bg-accent-red/10 border border-accent-red/30 rounded-full flex items-center justify-center animate-pulse">
+            <Lock className="w-7 h-7 text-accent-red" />
+          </div>
+          
+          <div className="space-y-2 max-w-sm">
+            <h3 className="font-serif font-black text-white text-base tracking-wider uppercase">JBM Office Security</h3>
+            <p className="text-xs text-gray-400 leading-relaxed font-sans">
+              Kontrol panel ini dibatasi khusus administrator resmi JBM Surabaya. Masukkan passcode untuk membuka akses.
+            </p>
+          </div>
+
+          <form onSubmit={handleAuth} className="w-full max-w-xs space-y-3">
+            <div className="space-y-1 text-left">
+              <label className="block text-[8.5px] font-mono uppercase tracking-wider text-gray-500">Passcode Administrator</label>
+              <input
+                type="password"
+                value={passcode}
+                onChange={(e) => setPasscode(e.target.value)}
+                placeholder="Masukkan Passcode"
+                className={`w-full bg-[#060914] border px-3 py-2 text-xs text-center font-mono rounded-lg outline-none tracking-widest transition-all
+                  ${authError 
+                    ? 'border-rose-500/50 focus:border-rose-500 bg-rose-500/5' 
+                    : 'border-white/10 focus:border-[#D4A017] text-white'
+                  }`}
+                autoFocus
+              />
+            </div>
+
+            {authError && (
+              <p className="text-[10px] font-mono text-rose-400 font-bold uppercase tracking-wider flex items-center gap-1 justify-center">
+                <ShieldAlert className="w-3.5 h-3.5" /> Passcode salah / tidak sah!
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className="w-full bg-[#D4A017] hover:bg-[#F0C040] text-[#080d1a] py-2 px-4 rounded-lg font-mono font-black uppercase text-xs tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-yellow-500/10 cursor-pointer"
+            >
+              <Unlock className="w-3.5 h-3.5" /> Buka Akses CMS
+            </button>
+          </form>
+
+          <div className="bg-[#121c33]/30 border border-white/5 rounded-lg p-3.5 text-[10px] text-gray-500 font-mono text-left space-y-1.5 max-w-sm">
+            <span className="text-accent-red font-bold uppercase block tracking-wider">// SETUP NOTE (VERCEL DEP):</span>
+            <span>Anda dapat menyetel passcode unik via Vercel Dashboard dengan menambahkan env: <code className="text-white bg-white/10 px-1 py-0.5 rounded font-bold font-mono">VITE_ADMIN_PASSCODE</code></span>
+            <span className="block text-gray-600 mt-1">Default local testing: <code className="text-gray-400 bg-white/5 px-1 py-0.5 rounded font-mono">adminJBM</code></span>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 bg-[#0d162a] border-t border-white/5 text-[10px] font-mono text-gray-500 text-center uppercase tracking-wider">
+          Security Secured by Supabase
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full bg-[#0a0f1d] border-l border-white/5 text-gray-200">
       {/* Header Panel */}
-      <div className="flex items-center justify-between p-4 border-b border-white/5 bg-[#101c33]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 border-b border-white/5 bg-[#101c33]">
         <div className="flex items-center gap-2">
           <Settings className="w-5 h-5 text-[#D4A017] animate-spin" />
           <h2 className="font-serif font-black uppercase text-sm tracking-widest text-[#F0C040]">
-            CMS Control Center
+            CMS Control Center <span className="text-[10px] text-gray-400 font-mono font-normal">v1.6</span>
           </h2>
         </div>
-        <button 
-          onClick={onClose}
-          className="text-gray-400 hover:text-white p-1 hover:bg-white/5 rounded"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Supabase Status indicator inside Admin console! */}
+          <div className={`px-2 py-1 rounded text-[9px] font-mono font-extrabold uppercase tracking-wider text-center border mr-2
+            ${supabaseSyncStatus === 'synced' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : ''}
+            ${supabaseSyncStatus === 'syncing' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse' : ''}
+            ${supabaseSyncStatus === 'error' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : ''}
+            ${supabaseSyncStatus === 'not-configured' ? 'bg-slate-500/10 text-slate-300 border-slate-500/20' : ''}
+            ${supabaseSyncStatus === 'idle' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : ''}
+          `}>
+            {supabaseSyncStatus === 'synced' && '● LIVE'}
+            {supabaseSyncStatus === 'syncing' && '● SYNCING'}
+            {supabaseSyncStatus === 'error' && '● SYNC ERROR'}
+            {supabaseSyncStatus === 'not-configured' && '● OFFLINE'}
+            {supabaseSyncStatus === 'idle' && '● READY'}
+          </div>
+
+          {/* Toggle Split-Screen Preview Button */}
+          <button
+            onClick={onToggleSplitPreview}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-mono uppercase tracking-wider font-bold transition-all border cursor-pointer
+              ${splitPreviewMode 
+                ? 'bg-[#152342] text-[#F0C040] border-[#D4A017]' 
+                : 'bg-[#080d19] text-gray-400 hover:text-white border-white/5 hover:border-white/10'
+              }`}
+            title="Tampilkan / Sembunyikan Pratinjau Langsung"
+          >
+            {splitPreviewMode ? <EyeOff className="w-3.5 h-3.5 animate-pulse" /> : <Eye className="w-3.5 h-3.5" />}
+            <span>{splitPreviewMode ? 'Tutup Preview' : 'Split Preview'}</span>
+          </button>
+
+          {/* Back to Public Web Presentation */}
+          <button
+            onClick={onClose}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-mono uppercase tracking-wider font-bold bg-[#D4A017] hover:bg-[#F0C040] text-[#080d1a] transition-all cursor-pointer"
+            title="Keluar dari Panel Admin & Kembali ke Web Showroom"
+          >
+            <Globe className="w-3.5 h-3.5" />
+            <span>Lihat Web</span>
+          </button>
+
+          <div className="w-[1px] h-5 bg-white/10 mx-1 hidden sm:block" />
+
+          {/* Logout trigger */}
+          <button 
+            onClick={handleLogout}
+            title="Keluar dari Sesi Admin JBM"
+            className="text-gray-400 hover:text-rose-400 p-1.5 hover:bg-white/5 rounded cursor-pointer transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Save Notification Toast */}
