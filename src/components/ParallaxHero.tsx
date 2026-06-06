@@ -162,15 +162,10 @@ export const ParallaxHero: React.FC<ParallaxHeroProps> = ({
             </div>
 
             {/* Architectural specification footnotes */}
-            <div className="pt-3.5 flex flex-wrap items-center gap-5 text-[10px] font-mono text-gray-500 border-t border-white/10 max-w-lg">
-              <div className="flex items-center gap-1.5">
-                <Ruler className="w-3.5 h-3.5 text-accent-red" />
-                <span>100% INDEPENDENT INSPECTED</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
-                <span>PREMIUM SHOWROOM SERVICE</span>
-              </div>
+            <div className="pt-3.5 flex flex-wrap items-center gap-4 text-[10px] font-mono text-gray-500 border-t border-white/10 max-w-lg">
+              <span>100% INDEPENDENT INSPECTED</span>
+              <span className="text-white/10 select-none">•</span>
+              <span>PREMIUM SHOWROOM SERVICE</span>
             </div>
           </div>
 
