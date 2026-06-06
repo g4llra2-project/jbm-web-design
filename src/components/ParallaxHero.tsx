@@ -54,7 +54,7 @@ export const ParallaxHero: React.FC<ParallaxHeroProps> = ({
   const heroBg = heroData.backgroundImage || "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=2000&q=90";
 
   return (
-    <div className="relative w-full h-[100vh] min-h-[650px] bg-black overflow-hidden z-0 sticky top-0 font-sans select-none">
+    <div className="relative w-full h-[calc(100vh-96px)] min-h-[520px] bg-black overflow-hidden z-0 sticky top-0 font-sans select-none">
       
       {/* ──────────────────────────────────────────────────────────────────────── */}
       {/* 1. CINEMATIC FULL SCREEN BACKGROUND WITH PARALLAX TRANSLATION */}
@@ -98,18 +98,18 @@ export const ParallaxHero: React.FC<ParallaxHeroProps> = ({
       {/* 4. MAIN INTERACTIVE FOREGROUND DESIGN */}
       {/* ──────────────────────────────────────────────────────────────────────── */}
       <div 
-        className="relative z-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full h-full flex flex-col justify-end pb-16 sm:pb-24 lg:pb-28"
+        className="relative z-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full h-full flex flex-col justify-end pb-8 sm:pb-10 lg:pb-12 xl:pb-14"
         style={{
           opacity: contentFadeOut,
           transform: `translateY(${contentTranslateY}px) translateZ(0)`,
           willChange: 'transform, opacity',
         }}
       >
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-end">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-end">
           
           {/* L.H.S: BRAND ELEVATION AND TITLE SPACING */}
           <div 
-            className="lg:col-span-7 space-y-6 text-left transition-transform duration-300"
+            className="lg:col-span-7 space-y-3 sm:space-y-4 text-left transition-transform duration-300"
             style={{
               transform: `translate3d(${hoverX * 0.4}px, ${hoverY * 0.4}px, 0)`
             }}
@@ -123,11 +123,11 @@ export const ParallaxHero: React.FC<ParallaxHeroProps> = ({
             </div>
 
             {/* Architectural Large typography pairing */}
-            <div className="space-y-3">
-              <span className="block font-mono text-[10px] tracking-[0.4em] text-gray-400 font-normal uppercase">
+            <div className="space-y-1.5">
+              <span className="block font-mono text-[9px] sm:text-[10px] tracking-[0.4em] text-gray-400 font-normal uppercase">
                 / JAYA BERKAT MOBIL
               </span>
-              <h1 className="font-sans font-black text-4xl sm:text-6xl lg:text-7xl text-white leading-[1.02] uppercase tracking-tight">
+              <h1 className="font-sans font-black text-3xl sm:text-4xl lg:text-5xl xl:text-6.5xl text-white leading-[1.05] uppercase tracking-tight">
                 {heroData.titlePrimary} <br />
                 <span className="text-accent-red relative inline-block">
                   {heroData.titleSecondary}
@@ -136,15 +136,15 @@ export const ParallaxHero: React.FC<ParallaxHeroProps> = ({
               </h1>
             </div>
 
-            <p className="text-gray-300 text-xs sm:text-sm leading-relaxed max-w-lg font-light font-sans tracking-wide">
+            <p className="text-gray-300 text-xs sm:text-[13px] leading-relaxed max-w-lg font-light font-sans tracking-wide">
               {heroData.description || 'Pusat showroom jual beli mobil premium bergaransi di Surabaya Barat. Setiap unit diforward melewati inspeksi detail dari team ahli bersertifikat JBM.'}
             </p>
 
             {/* Custom crafted architect style outlines for action buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-3 pointer-events-auto">
+            <div className="flex flex-col sm:flex-row gap-3 pt-1 pointer-events-auto">
               <button
                 onClick={() => setActiveTab('mobil-dijual')}
-                className="flex items-center justify-center gap-3 bg-white hover:bg-neutral-900 text-black hover:text-white border border-white px-8 py-3.5 rounded text-[11px] font-mono uppercase tracking-[0.18em] font-black transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer shadow-[0_20px_45px_rgba(0,0,0,0.55)]"
+                className="flex items-center justify-center gap-2.5 bg-white hover:bg-neutral-900 text-black hover:text-white border border-white px-6 py-2.5 rounded text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.16em] font-black transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer shadow-[0_15px_35px_rgba(0,0,0,0.5)]"
               >
                 <span>{heroData.ctaTextPrimary || 'LIHAT KATALOG'}</span>
                 <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -154,7 +154,7 @@ export const ParallaxHero: React.FC<ParallaxHeroProps> = ({
                 href="https://wa.me/6281330253797?text=Halo%2520Jaya%2520Berkat%2520Mobil,%2520saya%2520tertarik%2520dengan%2520katalog%2520mobil%2520premiumnya."
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-black/80 hover:bg-white text-white hover:text-black border border-white/10 hover:border-white px-8 py-3.5 rounded text-[11px] font-mono uppercase tracking-[0.18em] font-black transition-all duration-300 transform hover:-translate-y-0.5 backdrop-blur-md"
+                className="flex items-center justify-center gap-2 bg-black/80 hover:bg-white text-white hover:text-black border border-white/10 hover:border-white px-6 py-2.5 rounded text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.16em] font-black transition-all duration-300 transform hover:-translate-y-0.5 backdrop-blur-md"
               >
                 <MessageCircle className="w-3.5 h-3.5 text-accent-red" />
                 <span>{heroData.ctaTextSecondary || 'HUBUNGI KAMI'}</span>
@@ -162,13 +162,13 @@ export const ParallaxHero: React.FC<ParallaxHeroProps> = ({
             </div>
 
             {/* Architectural specification footnotes */}
-            <div className="pt-6 flex flex-wrap items-center gap-6 text-[10px] sm:text-[11px] font-mono text-gray-500 border-t border-white/10 max-w-lg">
-              <div className="flex items-center gap-2">
-                <Ruler className="w-4 h-4 text-accent-red" />
+            <div className="pt-3.5 flex flex-wrap items-center gap-5 text-[10px] font-mono text-gray-500 border-t border-white/10 max-w-lg">
+              <div className="flex items-center gap-1.5">
+                <Ruler className="w-3.5 h-3.5 text-accent-red" />
                 <span>100% INDEPENDENT INSPECTED</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
                 <span>PREMIUM SHOWROOM SERVICE</span>
               </div>
             </div>
@@ -177,43 +177,43 @@ export const ParallaxHero: React.FC<ParallaxHeroProps> = ({
           {/* R.H.S: ROTATING AND HOVERING CAD BLUEPRINT HIGHLIGHT CARD */}
           {highlightCar && (
             <div 
-              className="lg:col-span-5 w-full max-w-sm ml-auto select-none hidden lg:block pointer-events-auto"
+              className="lg:col-span-5 w-full max-w-[350px] ml-auto select-none hidden lg:block pointer-events-auto mb-1"
               style={{
                 transform: `translate3d(${hoverX * -0.6}px, ${hoverY * -0.6}px, 0)`
               }}
             >
-              <div className="bg-black/85 border border-white/10 hover:border-white/25 rounded-lg p-5 space-y-4 shadow-[0_30px_70px_rgba(0,0,0,0.95)] backdrop-blur-md relative overflow-hidden transition-all duration-300">
+              <div className="bg-black/85 border border-white/10 hover:border-white/25 rounded-lg p-3.5 sm:p-4 space-y-2.5 shadow-[0_30px_70px_rgba(0,0,0,0.95)] backdrop-blur-md relative overflow-hidden transition-all duration-300">
                 
                 {/* Visual CAD-themed crosshair accents */}
                 <div className="absolute top-2 right-2 w-2 h-2 border-r border-t border-white/20" />
                 <div className="absolute bottom-2 left-2 w-2 h-2 border-l border-b border-white/20" />
                 
-                <div className="flex justify-between items-center pb-2.5 border-b border-white/5 font-mono text-[9px] text-gray-400">
-                  <span className="uppercase tracking-widest text-[8px] text-accent-red font-bold flex items-center gap-1">
+                <div className="flex justify-between items-center pb-2 border-b border-white/5 font-mono text-[8.5px] text-gray-400">
+                  <span className="uppercase tracking-widest text-[7.5px] text-accent-red font-bold flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-accent-red animate-ping" />
                     HOT UNIT SPOTLIGHT
                   </span>
                   <span>STOCK_ID: JBM_{highlightCar.id.toUpperCase().slice(0, 5)}</span>
                 </div>
 
-                <div className="space-y-1">
-                  <div className="text-[10px] font-mono text-gray-500 uppercase tracking-widest leading-none">
+                <div className="space-y-0.5">
+                  <div className="text-[9px] font-mono text-gray-500 uppercase tracking-widest leading-none">
                     ENGINE SPECIFICATION // {highlightCar.year}
                   </div>
-                  <h3 className="font-sans font-black text-xl text-white uppercase tracking-tight">
+                  <h3 className="font-sans font-black text-lg text-white uppercase tracking-tight">
                     {highlightCar.name}
                   </h3>
-                  <div className="flex items-center gap-2 font-mono text-[9px] text-gray-400 pt-1">
-                    <span className="bg-white/5 px-2 py-0.5 rounded uppercase">{highlightCar.fuelType}</span>
+                  <div className="flex items-center gap-2 font-mono text-[8.5px] text-gray-400 pt-0.5">
+                    <span className="bg-white/5 px-1.5 py-0.5 rounded uppercase">{highlightCar.fuelType}</span>
                     <span>•</span>
-                    <span className="bg-white/5 px-2 py-0.5 rounded uppercase">{highlightCar.transmission}</span>
+                    <span className="bg-white/5 px-1.5 py-0.5 rounded uppercase">{highlightCar.transmission}</span>
                     <span>•</span>
                     <span>{highlightCar.mileage.toLocaleString('id-ID')} KM</span>
                   </div>
                 </div>
 
                 {/* Micro CAD details block */}
-                <div className="bg-neutral-900/50 border border-white/5 p-3 rounded font-mono text-[9px] space-y-1.5">
+                <div className="bg-neutral-900/50 border border-white/5 p-2.5 rounded font-mono text-[8.5px] space-y-1">
                   <div className="flex justify-between">
                     <span className="text-gray-500">TRANSMISSION RATIO:</span>
                     <span className="text-gray-300 font-bold">{highlightCar.transmission === 'AT' ? 'AUTOMATIC SPEED' : 'MANUAL CLUTCH'}</span>
@@ -229,10 +229,10 @@ export const ParallaxHero: React.FC<ParallaxHeroProps> = ({
                 </div>
 
                 {/* Price and Action inside Spotlight */}
-                <div className="flex items-center justify-between pt-2.5 font-sans">
+                <div className="flex items-center justify-between pt-1.5 font-sans">
                   <div>
-                    <span className="text-[9px] font-mono text-gray-500 uppercase tracking-wider block">Cash JBM Price</span>
-                    <p className="text-lg font-black text-accent-red leading-none mt-1">
+                    <span className="text-[8.5px] font-mono text-gray-400 uppercase tracking-wider block leading-none">Cash JBM Price</span>
+                    <p className="text-base sm:text-lg font-black text-accent-red leading-none mt-1">
                       Rp {highlightCar.price.toLocaleString('id-ID')}
                     </p>
                   </div>
@@ -241,9 +241,9 @@ export const ParallaxHero: React.FC<ParallaxHeroProps> = ({
                     href={`https://wa.me/6281330253797?text=Halo%2520Jaya%2520Berkat%2520Mobil,%2520apakah%2520stok%252520highlight%252520*${encodeURIComponent(highlightCar.name)}*%2520masih%2520ready?`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 bg-neutral-900 hover:bg-accent-red text-slate-200 hover:text-white border border-white/10 hover:border-accent-red px-4 py-2 rounded text-[10px] font-mono uppercase tracking-wider font-extrabold transition-all duration-300"
+                    className="flex items-center gap-1.5 bg-neutral-900 hover:bg-accent-red text-slate-200 hover:text-white border border-white/10 hover:border-accent-red px-3 py-2 rounded text-[9.5px] font-mono uppercase tracking-wider font-extrabold transition-all duration-300"
                   >
-                    <MessageCircle className="w-3.5 h-3.5 text-accent-red hover:text-white" />
+                    <MessageCircle className="w-3 h-3 text-accent-red hover:text-white" />
                     <span>TANYA SALES</span>
                   </a>
                 </div>

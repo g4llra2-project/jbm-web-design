@@ -19,7 +19,13 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   const [compressing, setCompressing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [imageLoadError, setImageLoadError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Reset load error state when image URL changes
+  React.useEffect(() => {
+    setImageLoadError(false);
+  }, [currentValue]);
 
   // Responsive client-side image compression using canvas and direct Cloudflare R2 upload
   const processAndCompressFile = (file: File) => {
@@ -204,18 +210,28 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         ) : hasValue ? (
           <div className="w-full flex items-center gap-3 relative group text-left" onClick={(e) => e.stopPropagation()}>
             {/* Miniature thumbnail preview */}
-            <div className="w-16 h-12 rounded bg-navy-deep relative flex-shrink-0 border border-white/15 overflow-hidden">
+            <div className={`w-16 h-12 rounded bg-navy-deep relative flex-shrink-0 border overflow-hidden flex items-center justify-center ${imageLoadError ? 'border-amber-500/30' : 'border-white/15'}`}>
               <img
                 src={currentValue}
                 alt="Uploaded source scale"
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
+                onError={() => setImageLoadError(true)}
               />
+              {imageLoadError && (
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-amber-500 font-bold text-xs" title="Link Terblokir / Private">
+                  ⚠️
+                </div>
+              )}
             </div>
             
             <div className="min-w-0 flex-1">
-              <div className="text-[9.5px] font-bold text-gray-300 uppercase tracking-wide flex items-center gap-1">
-                <span className="text-emerald-500">●</span> Gambar Siap Digunakan
+              <div className="text-[9.5px] font-bold uppercase tracking-wide flex items-center gap-1">
+                {imageLoadError ? (
+                  <span className="text-amber-500 flex items-center gap-1">⚠️ Terblokir (Private R2)</span>
+                ) : (
+                  <span className="text-emerald-400 flex items-center gap-1"><span className="text-emerald-500">●</span> Gambar Siap Digunakan</span>
+                )}
               </div>
               <p className="text-[8px] font-mono text-gray-500 truncate mt-0.5" title={currentValue}>
                 {isBase64 ? 'Format: Base64 URI (Local Sandbox)' : currentValue}
@@ -253,6 +269,28 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         <div className="flex items-center gap-1.5 bg-red-950/40 text-red-400 border border-red-500/10 p-1.5 rounded text-[9px] font-mono">
           <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
           <span>ERROR JBM: {errorMessage}</span>
+        </div>
+      )}
+
+      {/* Cloudflare R2 Public Access Instructions */}
+      {imageLoadError && !isBase64 && (
+        <div className="bg-amber-950/20 text-amber-300 border border-amber-500/20 p-2.5 rounded text-[8.5px] font-sans space-y-1 my-1.5">
+          <div className="font-bold uppercase tracking-wider flex items-center gap-1.5 text-amber-400">
+            <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 text-amber-500 animate-pulse" />
+            <span>AKSES CLOUDFLARE R2 TERKUNCI (PRIVATE BUCKET)</span>
+          </div>
+          <p className="leading-relaxed text-gray-300">
+            Unggahan berhasil, namun browser tidak bisa membacanya karena bucket ini masih diset <strong>Private</strong> di Cloudflare Anda.
+          </p>
+          <div className="pt-1.5 text-gray-400 font-mono text-[8px] space-y-1">
+            <div className="text-white font-bold mb-1">💡 CARA AKTIFKAN AKSES LANGSUNG:</div>
+            <div>1. Masuk ke <span className="text-amber-400 font-bold">Cloudflare Dashboard</span> &gt; menu <span className="font-bold">R2 Storage</span>.</div>
+            <div>2. Klik pada nama Bucket R2 JBM Anda.</div>
+            <div>3. Klik tab <span className="text-amber-300 font-bold font-sans">Settings</span> di kanan atas.</div>
+            <div>4. Gulir ke bawah ke bagian <span className="text-white font-bold">"Public Access"</span>.</div>
+            <div>5. Di baris <span className="text-amber-400 font-bold">"r2.dev subdomain"</span>, klik tombol <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1 rounded font-bold">Allow Access</span> (atau hubungkan Custom Domain).</div>
+            <div className="text-[7.5px] text-gray-500 italic mt-1.5 font-sans">Jika baru saja klik 'Allow Access', mohon tunggu 1 menit lalu muat ulang halaman ini agar gambar bisa tampil.</div>
+          </div>
         </div>
       )}
 
