@@ -61,7 +61,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'mobil-dijual', label: 'Mobil Dijual', tag: 'Katalog Aktif', desc: 'Pilihan mobil premium kondisinya bergaransi' },
     { id: 'profil', label: 'Profil JBM', tag: 'Tentang Kami', desc: 'Sejarah, visi-misi, & jaminan mutu showroom' },
     { id: 'hall-of-fame', label: 'Hall of Fame', tag: '3D Blueprint', desc: 'Pameran interaktif unit legendaris terkirim' },
-    { id: 'galeri', label: 'Galeri Showroom', tag: 'Aktivitas Kami', desc: 'Dokumentasi ruang pamer & transaksi terpercaya' },
+    { id: 'promo-artikel', label: 'Promo & Artikel', tag: 'Informasi JBM', desc: 'Sajian lengkap promo terbaru, panduan & edukasi otomotif' },
     { id: 'kontak', label: 'Kontak', tag: 'Hubungi Sales', desc: 'Alamat kantor cabang, nomor telepon, & map lokasi' },
   ];
 

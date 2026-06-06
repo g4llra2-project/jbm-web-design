@@ -205,7 +205,12 @@ export const INITIAL_CMS_DATA: CMSData = {
       readTime: "3 min baca",
       slug: "beli-mobil-baru-di-jbm",
       content: "Di Jaya Berkat Mobil, kami tidak hanya menyediakan unit mobil berkualitas premium siap pakai. Kami juga siap membantu Anda dalam pengadaan mobil baru secara lengkap. Baik itu kendaraan listrik (EV) masa kini, teknologi hybrid yang hemat bahan bakar, maupun mesin pembakaran internal/combustion standard. Keuntungan memesan via JBM adalah kemudahan pengurusan pembiayaan, diskon menarik mitra showroom, serta pengiriman tepat waktu langsung ke garasi Anda.",
-      isFeatured: true
+      isFeatured: true,
+      images: [
+        "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=600&h=400&q=80",
+        "https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=600&h=400&q=80",
+        "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=600&h=400&q=80"
+      ]
     },
     {
       id: "art-2",
@@ -215,7 +220,12 @@ export const INITIAL_CMS_DATA: CMSData = {
       readTime: "4 min baca",
       slug: "toyota-vellfire-mbg-review",
       content: "Toyota Vellfire 2.4 V Premium Sound tahun 2011 kini ditawarkan dengan harga spektakuler Rp 195 Juta di Jaya Berkat Mobil Surabaya. Kendaraan tipe MPV mewah super premium ini menawarkan kabin luas superior, kenyamanan berkendara kelas kabin diplomat, serta suspensi istimewa. Mobil ini sangat cocok sebagai sarana mobilitas keluarga besar dengan kemewahan berkelas tanpa harus mengeluarkan anggaran luar biasa.",
-      isFeatured: false
+      isFeatured: false,
+      images: [
+        "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&h=400&q=80",
+        "https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=600&h=400&q=80",
+        "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=600&h=400&q=80"
+      ]
     },
     {
       id: "art-3",
@@ -225,7 +235,12 @@ export const INITIAL_CMS_DATA: CMSData = {
       readTime: "5 min baca",
       slug: "rekomendasi-mobil-kecil",
       content: "Mengarungi jalanan kota Surabaya yang padat menuntut kendaraan yang lincah dan hemat bahan bakar. Keunggulan utama dari mobil compact city car adalah kemudahan manuver di jalur tikungan sempit, kemudahan mencari lokasi parkir di mall-mall besar, serta efisiensi penggunaan bahan bakar harian yang sangat tinggi. Beberapa rekomendasi unit compact terbaik kami meliputi Honda Brio E CVT, Honda Jazz RS, dan Daihatsu Ayla ADS yang kondisinya terawat seperti keluar baru dari dealer.",
-      isFeatured: false
+      isFeatured: false,
+      images: [
+        "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=600&h=400&q=80",
+        "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=600&h=400&q=80",
+        "https://images.unsplash.com/photo-1508962914676-134849a727f0?auto=format&fit=crop&w=600&h=400&q=80"
+      ]
     }
   ],
   gallery: [

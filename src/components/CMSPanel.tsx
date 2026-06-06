@@ -262,11 +262,57 @@ export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }
     onChange({ ...cmsData, testimonials: updated });
   };
 
-  const updateArticle = (id: string, key: keyof BlogArticle, value: string) => {
+  const updateArticle = (id: string, key: keyof BlogArticle, value: string | boolean) => {
     const updated = cmsData.articles.map(art => {
       if (art.id === id) return { ...art, [key]: value };
       return art;
     });
+    onChange({ ...cmsData, articles: updated });
+  };
+
+  const updateArticleImage = (id: string, imgIndex: number, value: string) => {
+    const updated = cmsData.articles.map(art => {
+      if (art.id === id) {
+        const currentImages = art.images ? [...art.images] : ['', '', ''];
+        // Ensure array size is at least 3
+        while (currentImages.length < 3) {
+          currentImages.push('');
+        }
+        currentImages[imgIndex] = value;
+        return { ...art, images: currentImages };
+      }
+      return art;
+    });
+    onChange({ ...cmsData, articles: updated });
+  };
+
+  const addArticle = () => {
+    const newId = `art-${Date.now()}`;
+    const today = new Date();
+    const formattedDate = today.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    const newArt: BlogArticle = {
+      id: newId,
+      category: 'PROMO',
+      title: 'PROMO DAN DISKON SPESIAL BARU',
+      date: formattedDate,
+      readTime: '3 Menit',
+      slug: `promo-diskon-baru-${Date.now()}`,
+      content: 'Tulis deskripsi promo terbaru atau panduan tips otomotif berkualitas di sini. Konten ini akan langsung terbit secara realtime.',
+      isFeatured: false,
+      images: [
+        "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=600&h=400&q=80",
+        "https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=600&h=400&q=80",
+        "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=600&h=400&q=80"
+      ]
+    };
+    onChange({
+      ...cmsData,
+      articles: [newArt, ...cmsData.articles]
+    });
+  };
+
+  const deleteArticle = (id: string) => {
+    const updated = cmsData.articles.filter(art => art.id !== id);
     onChange({ ...cmsData, articles: updated });
   };
 
@@ -898,36 +944,134 @@ export const CMSPanel: React.FC<CMSPanelProps> = ({ cmsData, onChange, onClose }
         {/* ── SUB TAB: ARTIKEL ── */}
         {activeSubTab === 'artikel' && (
           <div className="space-y-4 animate-fadeIn">
-            <h3 className="text-xs font-mono uppercase tracking-wider text-[#D4A017] border-b border-white/5 pb-2">
-              Daftar Promo & Artikel (Bisa Diedit)
-            </h3>
+            <div className="flex items-center justify-between border-b border-white/5 pb-2">
+              <h3 className="text-xs font-mono uppercase tracking-wider text-[#D4A017]">
+                Daftar Promo & Artikel (Realtime)
+              </h3>
+              <button
+                onClick={addArticle}
+                className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-sans font-bold text-[10px] uppercase tracking-wider px-2.5 py-1.5 rounded transition-colors duration-150 shadow-md shadow-emerald-950/20 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Tambah Artikel</span>
+              </button>
+            </div>
 
-            {cmsData.articles.map((art) => (
-              <div key={art.id} className="bg-[#111a30] p-3 rounded border border-white/5 space-y-3">
-                <div className="flex justify-between items-center bg-[#0a0f1d] p-1 px-2 rounded">
-                  <span className="text-[10px] font-mono text-amber-500 font-bold">{art.category}</span>
-                  <span className="text-[9px] text-gray-400 font-serif">{art.date}</span>
-                </div>
-                <div>
-                  <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Judul Artikel / Promo</label>
-                  <input
-                    type="text"
-                    value={art.title}
-                    onChange={(e) => updateArticle(art.id, 'title', e.target.value)}
-                    className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-[#D4A017]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Isi Konten Utama</label>
-                  <textarea
-                    rows={4}
-                    value={art.content}
-                    onChange={(e) => updateArticle(art.id, 'content', e.target.value)}
-                    className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-[#D4A017] resize-none"
-                  />
-                </div>
+            {cmsData.articles.length === 0 ? (
+              <div className="text-center py-8 text-gray-500 text-xs border border-dashed border-white/5 rounded">
+                Belum ada artikel atau promo. Klik "+ Tambah Artikel" untuk membuat baru.
               </div>
-            ))}
+            ) : (
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                {cmsData.articles.map((art) => (
+                  <div key={art.id} className="bg-[#111a30] p-3.5 rounded-lg border border-white/5 space-y-3 relative group">
+                    <div className="flex justify-between items-center bg-[#0a0f1d] p-1.5 px-2 rounded-md">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-mono text-gray-500">ID: {art.id.replace('art-', '')}</span>
+                      </div>
+                      <button
+                        onClick={() => deleteArticle(art.id)}
+                        className="p-1 text-red-500 hover:bg-red-500/10 rounded transition-colors duration-150 cursor-pointer"
+                        title="Hapus Artikel/Promo"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[8.5px] uppercase tracking-wider text-gray-400 mb-0.5">Kategori</label>
+                        <select
+                          value={art.category}
+                          onChange={(e) => updateArticle(art.id, 'category', e.target.value)}
+                          className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-[#D4A017]"
+                        >
+                          <option value="PROMO">PROMO</option>
+                          <option value="TIPS">TIPS</option>
+                          <option value="DOKUMENTASI">DOKUMENTASI</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[8.5px] uppercase tracking-wider text-gray-400 mb-0.5">Estimasi Baca</label>
+                        <input
+                          type="text"
+                          value={art.readTime}
+                          onChange={(e) => updateArticle(art.id, 'readTime', e.target.value)}
+                          placeholder="Contoh: 3 Menit"
+                          className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-[#D4A017]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[8.5px] uppercase tracking-wider text-gray-400 mb-0.5">Publikasi Tanggal</label>
+                        <input
+                          type="text"
+                          value={art.date}
+                          onChange={(e) => updateArticle(art.id, 'date', e.target.value)}
+                          placeholder="Contoh: 1 Juni 2026"
+                          className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-[#D4A017]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[8.5px] uppercase tracking-wider text-gray-400 mb-0.5">Slug URL (Klik)</label>
+                        <input
+                          type="text"
+                          value={art.slug}
+                          onChange={(e) => updateArticle(art.id, 'slug', e.target.value)}
+                          placeholder="Contoh: promo-kredit-spesial"
+                          className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-[#D4A017]"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[8.5px] uppercase tracking-wider text-gray-400 mb-0.5">Judul Artikel / Promo</label>
+                      <input
+                        type="text"
+                        value={art.title}
+                        onChange={(e) => updateArticle(art.id, 'title', e.target.value)}
+                        className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-[#D4A017] font-bold"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[8.5px] uppercase tracking-wider text-gray-400 mb-0.5">Isi Konten Utama</label>
+                      <textarea
+                        rows={5}
+                        value={art.content}
+                        onChange={(e) => updateArticle(art.id, 'content', e.target.value)}
+                        className="w-full bg-[#0a0f1d] border border-white/10 rounded px-2 py-1.5 text-xs text-white focus:border-[#D4A017] resize-none leading-relaxed"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 pt-1.5 border-t border-white/5">
+                      <label className="block text-[8.5px] uppercase tracking-wider text-gray-400">
+                        Foto Galeri Artikel (Max 3)
+                      </label>
+                      <div className="space-y-1.5">
+                        {[0, 1, 2].map((imgIdx) => {
+                          const val = art.images?.[imgIdx] || '';
+                          return (
+                            <div key={imgIdx} className="flex items-center gap-1.5">
+                              <span className="text-[9px] font-mono text-gray-500 font-bold w-4">#{imgIdx + 1}</span>
+                              <input
+                                type="text"
+                                value={val}
+                                onChange={(e) => updateArticleImage(art.id, imgIdx, e.target.value)}
+                                placeholder={`URL Foto ke-${imgIdx + 1} (kosongkan jika tidak dipakai)`}
+                                className="flex-1 bg-[#0a0f1d] border border-white/10 rounded px-2 py-1 text-[11px] text-white focus:border-[#D4A017]"
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

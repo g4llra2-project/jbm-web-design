@@ -59,6 +59,7 @@ export interface BlogArticle {
   slug: string;
   content: string;
   isFeatured?: boolean;
+  images?: string[];
 }
 
 export interface GalleryItem {

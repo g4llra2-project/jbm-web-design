@@ -565,73 +565,95 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {(cmsData.advisors || []).map((sale, idx) => (
                 <div 
                   key={sale.id || idx} 
-                  className="bg-gradient-to-b from-[#0c121e] to-[#040811] border border-white/5 hover:border-accent-red/50 rounded-xl p-5 text-center space-y-4 relative overflow-hidden group shadow-2xl transition-all duration-300 hover:scale-[1.02] flex flex-col justify-between"
+                  className={`border transition-all duration-350 hover:scale-[1.03] flex flex-col justify-between overflow-hidden shadow-xl hover:shadow-2xl h-full rounded-[24px] p-2.5 pb-4 group
+                    ${theme === 'light' 
+                      ? 'bg-white border-slate-200/90 shadow-slate-100/70' 
+                      : 'bg-gradient-to-b from-[#111827] to-[#070b14] border-white/5 shadow-black/80'
+                    }`}
                   id={`advisor_${sale.name.toLowerCase().replace(/\s+/g, '_')}`}
                 >
-                  {/* Neon top/ambient outline */}
-                  <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4A017]/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  
-                  {/* Status Indicator Live */}
-                  <div className="absolute top-3 right-3 flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-                    </span>
-                    <span className="text-[7.5px] font-mono text-emerald-400 uppercase font-bold tracking-wider">ONLINE</span>
-                  </div>
-
-                  {/* Gorgeous high-contrast profile picture */}
-                  <div className="space-y-3">
-                    <div className="relative w-20 h-20 rounded-full mx-auto overflow-hidden p-1 border-2 border-white/5 group-hover:border-accent-red transition-colors duration-300">
+                  <div className="space-y-4">
+                    {/* Media Container with portrait Aspect Ratio */}
+                    <div className="relative aspect-[4/5] rounded-[20px] overflow-hidden bg-[#0d131f] shadow-inner-md">
                       <img 
-                        src={optimizeImageUrl(sale.avatar, 150, 80)} 
+                        src={optimizeImageUrl(sale.avatar, 300, 375)} 
                         alt={sale.name}
-                        className="w-full h-full object-cover rounded-full filter grayscale group-hover:grayscale-0 transition-all duration-300 scale-105 group-hover:scale-110"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-106"
                         referrerPolicy="no-referrer"
                       />
+                      
+                      {/* Live Online Badge Overlaid */}
+                      <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 bg-emerald-500/90 text-white backdrop-blur-md px-2.5 py-0.5 rounded-full border border-white/10 shadow-sm">
+                        <span className="relative flex h-1.5 w-1.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
+                        </span>
+                        <span className="text-[7px] font-mono uppercase font-black tracking-widest leading-none">ONLINE</span>
+                      </div>
+
+                      {/* Showroom Area Identifier Tag Overlaid */}
+                      <div className={`absolute bottom-2.5 left-2.5 backdrop-blur-sm font-mono text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border shadow-sm
+                        ${theme === 'light'
+                          ? 'bg-white/90 border-slate-200/80 text-slate-800'
+                          : 'bg-black/60 border-white/10 text-[#D4A017]'
+                        }`}
+                      >
+                        📍 {sale.area.replace('Showroom ', '')}
+                      </div>
                     </div>
 
-                    {/* Metadata detail */}
-                    <div>
-                      <h4 className="font-sans font-black text-sm text-slate-100 uppercase tracking-wide leading-tight group-hover:text-accent-red transition-colors">
-                        {sale.name}
-                      </h4>
-                      <span className="text-[9px] text-[#D4A017] uppercase tracking-widest font-mono font-bold">
-                        {sale.badge}
-                      </span>
-                    </div>
-
-                    {/* Showroom location emblem tag */}
-                    <div className="inline-block text-[8.5px] font-mono font-bold text-gray-400 bg-black/40 border border-white/5 py-1 px-2.5 rounded uppercase tracking-wider">
-                      {sale.area}
-                    </div>
-
-                    {/* Specialty niche */}
-                    <div className="pt-1.5 border-t border-white/5">
-                      <p className="text-[8px] font-mono text-slate-500 uppercase tracking-widest">Kombinasi Spesialisasi:</p>
-                      <p className="text-[10px] font-sans font-bold text-slate-200 uppercase mt-0.5">{sale.specialty}</p>
-                    </div>
-
-                    {/* Rating achievements summary */}
-                    <div className="flex items-center justify-center gap-4 text-[9px] font-mono text-gray-500 pt-1">
-                      <span className="flex items-center gap-0.5 text-amber-500 font-bold">
-                        <Star className="w-3 h-3 fill-amber-500" /> {sale.rating}
-                      </span>
-                      <span className="text-white/20">|</span>
-                      <span className="text-slate-300 font-bold uppercase">{sale.sold}</span>
+                    {/* Metadata details block */}
+                    <div className="px-1.5 space-y-1.5 text-left">
+                      <div className="flex items-center justify-between gap-1">
+                        <h4 className={`font-sans font-black text-[13.5px] uppercase tracking-wide leading-tight truncate ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}>
+                          {sale.name}
+                        </h4>
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 fill-emerald-500/20 shrink-0" />
+                      </div>
+                      
+                      {/* Specialty bio of Bennett style */}
+                      <p className={`text-[10px] leading-relaxed font-sans font-bold line-clamp-3 h-12 uppercase tracking-wide
+                        ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}
+                      >
+                        Spesialis {sale.specialty} • {sale.badge} JBM terpercaya.
+                      </p>
                     </div>
                   </div>
 
-                  {/* Direct action CTA button link */}
-                  <div className="pt-2">
+                  {/* Footing actions & metrics */}
+                  <div className={`pt-3 border-t mt-4 flex items-center justify-between gap-1 px-1.5
+                    ${theme === 'light' ? 'border-slate-100' : 'border-white/5'}`}
+                  >
+                    {/* Metrics Row */}
+                    <div className="flex items-center gap-2 font-mono text-[10px]">
+                      <div className="flex items-center gap-0.5" title={`${sale.rating} Bintang`}>
+                        <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />
+                        <span className={`font-black ${theme === 'light' ? 'text-slate-800' : 'text-slate-200'}`}>
+                          {sale.rating}
+                        </span>
+                      </div>
+                      <span className={`text-[11px] ${theme === 'light' ? 'text-slate-200' : 'text-white/10'}`}>|</span>
+                      <div className="flex items-center gap-0.5" title={`${sale.sold} Unit Selesai`}>
+                        <Award className="w-3.5 h-3.5 text-accent-red shrink-0" />
+                        <span className={`font-black ${theme === 'light' ? 'text-slate-800' : 'text-slate-200'}`}>
+                          {sale.sold.split(' ')[0]}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Action chat link */}
                     <a
-                      href={`https://wa.me/${sale.phone.replace(/[^0-9]/g, '')}?text=Halo%20${sale.name},%20saya%20tertarik%20konsultasi%20mengenai%20unit%20siap%20pakai%20Jaya%20Berkat%20Mobil.`}
+                      href={`https://wa.me/${sale.phone.replace(/[^0-9]/g, '')}?text=Halo%20${sale.name},%20saya%20tertarik%20konsultasi%20mengenai%20unit%20ready%20di%20Jaya%20Berkat%20Mobil.`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full flex items-center justify-center gap-2 bg-navy-deep hover:bg-emerald-600/90 border border-white/10 hover:border-emerald-500 text-slate-300 hover:text-white py-2 rounded-lg text-[9px] uppercase font-black tracking-widest transition-all duration-300"
+                      className={`px-3 py-1.5 rounded-full text-[9px] font-sans font-black uppercase tracking-widest flex items-center gap-1.5 transition-all duration-200 cursor-pointer border hover:-translate-y-[1px] active:translate-y-[1px]
+                        ${theme === 'light'
+                          ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800 hover:text-slate-950 shadow-sm'
+                          : 'bg-white/5 hover:bg-white/10 border-white/5 text-slate-200 hover:text-white'
+                        }`}
                     >
-                      <MessageCircle className="w-3.5 h-3.5 text-accent-red group-hover:text-white fill-current shrink-0" />
-                      <span>KONSULTASI SEKARANG</span>
+                      <span>Tanya</span>
+                      <MessageCircle className="w-3 h-3 text-accent-red fill-current shrink-0" />
                     </a>
                   </div>
                 </div>
@@ -813,42 +835,71 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {/* Header */}
           <div className="text-left space-y-2">
             <span className="text-[10px] font-mono text-accent-red uppercase tracking-[0.2em] font-bold block">EDITORIAL CENTER</span>
-            <h1 className="font-sans font-black text-3xl text-slate-100 uppercase tracking-tight">Promo Spesial & Panduan Otomotif</h1>
-            <p className="text-slate-400 text-xs sm:text-sm max-w-lg">
-              Temukan penawaran DP kredit spesial dan tips perawatan dari ahli inspektor kami. Dikembangkan secara mandiri lewat CMS.
+            <h1 className={`font-sans font-black text-3xl uppercase tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}>
+              Promo Spesial & Panduan Otomotif
+            </h1>
+            <p className={`text-xs sm:text-sm max-w-lg ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
+              Temukan penawaran DP kredit spesial dan tips perawatan dari ahli inspektor kami. Dikembangkan secara mandiri lewat CMS JBM.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {cmsData.articles.map((art) => (
-              <div 
-                key={art.id} 
-                onClick={() => setActiveArticleId(art.id)}
-                className="bg-navy-card hover:bg-navy-card/80 border border-navy-light hover:border-accent-red/60 p-5 rounded space-y-4 cursor-pointer transition-all duration-200 group shadow-lg"
-              >
-                <div className="flex justify-between items-center text-[10px] font-mono text-slate-500">
-                  <span className="bg-accent-red/10 border border-accent-red/30 px-2.5 py-0.5 text-accent-red font-semibold uppercase rounded tracking-wider">
-                    {art.category}
-                  </span>
-                  <span>{art.date}</span>
-                </div>
-                
-                <h3 className="font-sans font-bold text-base text-slate-100 group-hover:text-accent-red transition-colors leading-tight line-clamp-2 uppercase tracking-wide">
-                  {art.title}
-                </h3>
+            {cmsData.articles.map((art) => {
+              const activeImages = art.images?.filter((img) => !!img) || [];
+              const hasImage = activeImages.length > 0;
+              return (
+                <div 
+                  key={art.id} 
+                  onClick={() => setActiveArticleId(art.id)}
+                  className={`border p-5 rounded-[20px] space-y-4 cursor-pointer transition-all duration-300 group shadow-lg hover:shadow-xl hover:scale-[1.01] flex flex-col justify-between
+                    ${theme === 'light'
+                      ? 'bg-white border-slate-200/95 hover:border-accent-red text-slate-800 shadow-slate-100/70'
+                      : 'bg-[#111827] border-white/5 hover:border-accent-red/60 text-slate-100 shadow-black/80'
+                    }`}
+                >
+                  <div className="space-y-3.5">
+                    {/* Image Thumbnail Header */}
+                    {hasImage && (
+                      <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-black/10 border border-black/5 dark:border-white/5 shadow-inner">
+                        <img 
+                          src={optimizeImageUrl(activeImages[0], 400, 80)} 
+                          alt={art.title}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-106"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                    )}
 
-                <p className="text-slate-400 text-xs line-clamp-3 leading-relaxed">
-                  {art.content}
-                </p>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-[10px] font-mono">
+                        <span className="bg-accent-red/10 border border-accent-red/30 px-2.5 py-0.5 text-accent-red font-bold uppercase rounded tracking-wider leading-none">
+                          {art.category}
+                        </span>
+                        <span className={theme === 'light' ? 'text-slate-500' : 'text-slate-400'}>{art.date}</span>
+                      </div>
+                      
+                      <h3 className={`font-sans font-extrabold text-[15px] group-hover:text-accent-red transition-colors leading-snug line-clamp-2 uppercase tracking-wide
+                        ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}>
+                        {art.title}
+                      </h3>
 
-                <div className="flex items-center justify-between pt-3 border-t border-navy-light text-[10px] font-mono text-slate-500 leading-none">
-                  <span>⏱️ {art.readTime}</span>
-                  <span className="text-accent-red group-hover:underline flex items-center gap-0.5 font-sans font-bold">
-                    Baca Selengkapnya <ChevronRight className="w-3.5 h-3.5" />
-                  </span>
+                      <p className={`text-xs line-clamp-3 leading-relaxed
+                        ${theme === 'light' ? 'text-slate-600 font-medium' : 'text-slate-400'}`}>
+                        {art.content}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className={`flex items-center justify-between pt-3.5 border-t text-[10px] font-mono leading-none mt-2
+                    ${theme === 'light' ? 'border-slate-100 text-slate-500' : 'border-white/5 text-slate-400'}`}>
+                    <span>⏱️ {art.readTime}</span>
+                    <span className="text-accent-red group-hover:underline flex items-center gap-0.5 font-sans font-black uppercase tracking-wider">
+                      Baca <ChevronRight className="w-3.5 h-3.5 shrink-0" />
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
         </div>
@@ -862,43 +913,95 @@ export const Dashboard: React.FC<DashboardProps> = ({
             const art = cmsData.articles.find(a => a.id === activeArticleId);
             if (!art) return null;
             return (
-              <div className="relative max-w-2xl w-full bg-navy-card border border-navy-light rounded-lg overflow-hidden p-6 sm:p-8 space-y-6 max-h-[85vh] overflow-y-auto shadow-2xl">
+              <div className={`relative max-w-2xl w-full border rounded-3xl p-6 sm:p-8 space-y-6 max-h-[85vh] overflow-y-auto shadow-2xl transition-all
+                ${theme === 'light'
+                  ? 'bg-white border-slate-200'
+                  : 'bg-[#111827] border-white/5'
+                }`}
+              >
                 <button 
                   onClick={() => setActiveArticleId(null)}
-                  className="absolute top-4 right-4 bg-navy-deep border border-navy-light hover:bg-[#E74C3C] hover:border-[#E74C3C] text-slate-400 hover:text-white font-bold p-1 rounded transition-colors"
+                  className={`absolute top-4 right-4 border font-bold p-1 rounded-lg transition-colors cursor-pointer
+                    ${theme === 'light'
+                      ? 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200 hover:text-slate-800'
+                      : 'bg-[#1a2333] border-white/5 text-slate-400 hover:bg-[#E74C3C] hover:border-[#E74C3C] hover:text-white'
+                    }`}
                 >
                   <X className="w-5 h-5" />
                 </button>
 
-                <div className="space-y-2">
-                  <span className="inline-block bg-accent-red/10 border border-accent-red/30 px-3 py-0.5 rounded text-[10px] font-mono text-accent-red tracking-widest font-bold uppercase mb-1">
+                <div className="space-y-3">
+                  <span className="inline-block bg-accent-red/10 border border-accent-red/30 px-3 py-1 rounded text-[10px] font-mono text-accent-red tracking-widest font-black uppercase mb-1">
                     {art.category} | JBM NEWS
                   </span>
-                  <h2 className="font-sans font-black text-xl sm:text-2xl text-slate-100 tracking-tight leading-tight uppercase">
+                  <h2 className={`font-sans font-black text-xl sm:text-2xl tracking-tight leading-snug uppercase
+                    ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}
+                  >
                     {art.title}
                   </h2>
-                  <div className="text-[10px] text-slate-500 font-mono flex gap-4">
-                    <span>Publikasi: {art.date}</span>
-                    <span>Estimasi: {art.readTime}</span>
+                  <div className={`text-[10px] font-mono flex gap-4 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                    <span>🗓️ Publikasi: {art.date}</span>
+                    <span>⏱️ Estimasi: {art.readTime}</span>
                   </div>
                 </div>
 
-                <p className="text-slate-300 text-xs sm:text-sm leading-relaxed whitespace-pre-line font-sans border-t border-navy-light pt-4">
+                {/* Images Gallery in Modal (Maximum 3 Photos) */}
+                {(() => {
+                  const activeImages = art.images?.filter((img) => !!img) || [];
+                  if (activeImages.length === 0) return null;
+                  return (
+                    <div className="space-y-2 pt-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {activeImages.slice(0, 3).map((img, i) => (
+                          <div 
+                            key={i} 
+                            className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-black/10 border border-slate-200/50 dark:border-white/5 shadow-md group/gallery cursor-zoom-in"
+                            onClick={() => window.open(img, '_blank')}
+                            title="Klik untuk memperbesar gambar"
+                          >
+                            <img 
+                              src={optimizeImageUrl(img, 500, 80)} 
+                              alt={`Foto ${i + 1} - ${art.title}`}
+                              className="w-full h-full object-cover transition-all duration-300 hover:scale-105"
+                              referrerPolicy="no-referrer"
+                            />
+                            <span className="absolute bottom-2 left-2 bg-black/75 backdrop-blur-sm text-white text-[8px] font-mono px-2 py-0.5 rounded-md font-bold uppercase tracking-wider">
+                              Foto {i + 1}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                <p className={`text-xs sm:text-sm leading-relaxed whitespace-pre-line font-sans border-t pt-5
+                  ${theme === 'light' 
+                    ? 'text-slate-750 font-medium border-slate-105' 
+                    : 'text-slate-300 border-white/5'
+                  }`}
+                >
                   {art.content}
                 </p>
 
-                <div className="flex gap-2 pt-4 border-t border-navy-light">
+                <div className={`flex gap-3 pt-5 border-t
+                  ${theme === 'light' ? 'border-slate-100' : 'border-white/5'}`}
+                >
                   <a
-                    href="https://wa.me/6281330253797?text=Halo%20Jaya%20Berkat%20Mobil,%20saya%20tertarik%20dengan%20promo%20yang%20baru%20saya%20baca."
+                    href={`https://wa.me/6281330253797?text=Halo%20Jaya%20Berkat%20Mobil,%20saya%20tertarik%20bertanya%20mengenai%20konten%20promo/tips%20*${encodeURIComponent(art.title)}*`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 bg-accent-red hover:bg-accent-red-hover text-white text-center font-sans font-black uppercase text-xs py-2.5 rounded hover:scale-[1.01] transition-transform shadow-lg shadow-red-950/20"
+                    className="flex-1 bg-accent-red hover:bg-[#c93b2a] text-white text-center font-sans font-black uppercase text-xs py-3 rounded-xl hover:scale-[1.01] transition-transform shadow-lg shadow-red-950/20"
                   >
                     Tanya Promo/Artikel Lewat WhatsApp
                   </a>
                   <button
                     onClick={() => setActiveArticleId(null)}
-                    className="px-5 bg-navy-deep hover:bg-navy-light border border-navy-light text-white rounded text-xs transition-colors"
+                    className={`px-5 border font-sans font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer
+                      ${theme === 'light'
+                        ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+                        : 'bg-white/5 hover:bg-white/10 border-white/5 text-slate-300'
+                      }`}
                   >
                     Tutup
                   </button>
