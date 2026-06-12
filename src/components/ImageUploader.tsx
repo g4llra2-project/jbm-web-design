@@ -41,9 +41,12 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
-        // Set maximum dimension
-        const MAX_WIDTH = 1000;
-        const MAX_HEIGHT = 1000;
+        // Set maximum dimension - dynamically scale resolution and quality based on CDN presence
+        // This ensures absolute HD clarity on Cloudflare R2 while securely defending local Sandbox environments from QuotaExceededError
+        const MAX_WIDTH = isR2Configured ? 2048 : 1600;
+        const MAX_HEIGHT = isR2Configured ? 2048 : 1600;
+        const compressionQuality = isR2Configured ? 0.95 : 0.88;
+        
         let width = img.width;
         let height = img.height;
 
@@ -68,7 +71,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           ctx.drawImage(img, 0, 0, width, height);
           
           // Export as compressed output
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', compressionQuality);
           
           if (isR2Configured) {
             setCompressing(false);
